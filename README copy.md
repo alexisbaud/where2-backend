@@ -1,48 +1,12 @@
-# Where2 Backend
+Url de l'api : 
 
-API Node.js avec Hono et TypeScript pour l'application Where2, un service de recommandation d'activités personnalisées basé sur l'IA.
-
-## Installation
-
-```bash
-npm install
-```
-
-## Développement
-
-```bash
-npm run dev
-```
-
-## Production
-
-```bash
-npm run build
-npm start
-```
-
-## Configuration
-
-Le backend nécessite plusieurs variables d'environnement pour fonctionner correctement. Créez un fichier `.env` à la racine du projet avec les variables suivantes :
-
-```
-PORT=3000
-NODE_ENV=development
-OPENAI_API_KEY=votre_clé_api_openai
-OPENAI_MODEL=o3-mini
-WEATHER_API_KEY=votre_clé_api_openweathermap
-GOOGLE_MAPS_API_KEY=votre_clé_api_google_maps
-LOG_LEVEL=info
-```
-
-## Documentation API
+# Documentation API
 
 ### Endpoints disponibles
 
 | Méthode | Route | Description |
 |---------|-------|-------------|
 | GET | `/healthz` | Vérification de l'état du serveur |
-| POST | `/suggest` | Génération de suggestions d'activités (modèle configuré dans .env) |
 | POST | `/suggest-o3` | Génération de suggestions d'activités (modèle o3) |
 | GET | `/activity/:id` | Récupération des détails d'une activité spécifique |
 
@@ -63,7 +27,6 @@ GET /healthz
 ### 2. Génération de suggestions d'activités
 
 ```
-POST /suggest
 POST /suggest-o3
 ```
 
@@ -160,7 +123,6 @@ GET /activity/:id
 ## Spécificités techniques
 
 - **Modèles IA**: Le service utilise deux options pour générer des recommandations:
-  - `/suggest` utilise le modèle configuré dans la variable d'environnement OPENAI_MODEL
   - `/suggest-o3` utilise spécifiquement le modèle o3 d'OpenAI
 
 - **Services intégrés**:

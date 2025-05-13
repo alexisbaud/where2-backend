@@ -1,0 +1,41 @@
+sequenceDiagram
+    autonumber
+    participant AppRN as Front-end (Expo)
+    participant API as Back-end (Hono)
+    participant WX as Weather API
+    participant GPT as OpenAI gpt-4.1
+    participant GM as Google Maps
+
+    %% ── APPEL INITIAL ───────────────────────────────
+    AppRN->>API: POST /suggest (answers + location)
+    API->>WX: GET weather(lat, lon)
+    API->>GPT: Call #1 - prompt complet
+    GPT-->>API: JSON v1 (avec champs poss. null)
+
+    %% ── VÉRIF. & ÉVENTUELLE PASS 2 ──────────────────
+    alt JSON complet
+        API-->>API: Tous les champs OK
+    else Champs manquants
+        API->>GPT: Call #2 - fill missing fields
+        GPT-->>API: JSON patch
+        API-->>API: Merge v1 + patch
+    end
+
+    %% ── ENRICHISSEMENT DISTANCE ─────────────────────
+    API->>GM: Distances & durées (N requêtes)
+    GM-->>API: Metrics
+    API-->>AppRN: 200 OK — SuggestResponse
+
+    %% ── REFINEMENT SI BESOIN ────────────────────────
+    opt Rien ne plaît
+        AppRN->>API: POST /suggest refine=true (extra answers)
+        API->>GPT: Nouveau prompt refine
+        GPT-->>API: JSON v2
+        API->>GM: Distances
+        GM-->>API: Metrics
+        API-->>AppRN: Nouvelle liste
+    end
+
+    %% ── FICHE DÉTAIL (FACULTATIF) ───────────────────
+    AppRN->>API: GET /activity/:id
+    API-->>AppRN: Activity details

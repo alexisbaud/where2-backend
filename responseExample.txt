@@ -1,0 +1,350 @@
+# GPT-4.1 Response Example
+```json
+{
+  "activities": [
+    {
+      "id": "act_01",
+      "title": "Balade Street-Art à Belleville",
+      "description": "Explorez le quartier de Belleville à la découverte du street-art parisien. De nombreux artistes locaux et internationaux ont transformé les murs de ce quartier en une galerie d'art à ciel ouvert. Idéal pour une sortie culturelle et artistique, même par temps de pluie grâce à la présence d'abris et de passages couverts.",
+      "price_eur": 0,
+      "duration_min": 60,
+      "duration_max": 120,
+      "location": {
+        "name": "Quartier de Belleville",
+        "address": "Rue Denoyez, 75020 Paris, France",
+        "lat": 48.8722,
+        "lng": 2.3826
+      },
+      "distance_m": 3920,
+      "estimated_travel_time": 975,
+      "travel_type": 2,
+      "indoor": false,
+      "authentic": true,
+      "temporary": false,
+      "tags": [
+        "art",
+        "balade",
+        "street-art",
+        "culture",
+        "gratuit"
+      ],
+      "rating_google": null,
+      "reviews_count": null,
+      "image_url": "https://www.pariszigzag.fr/wp-content/uploads/2016/02/street-art-belleville.jpg",
+      "external_url": "https://www.pariszigzag.fr/secret-visite/visites-guidees/street-art-belleville",
+      "is_free": true,
+      "is_student_free": true,
+      "language": "fr",
+      "open_hours": null,
+      "date_special": null,
+      "organizer": null
+    },
+    {
+      "id": "act_02",
+      "title": "Visite des Jardins du Luxembourg",
+      "description": "Profitez d'une promenade dans les célèbres Jardins du Luxembourg. Même sous une légère pluie, la visite est agréable grâce à la végétation et aux nombreuses statues. C'est un lieu emblématique et paisible du centre de Paris.",
+      "price_eur": 0,
+      "duration_min": 45,
+      "duration_max": 90,
+      "location": {
+        "name": "Jardins du Luxembourg",
+        "address": "Rue de Médicis, 75006 Paris, France",
+        "lat": 48.8462,
+        "lng": 2.3372
+      },
+      "distance_m": 2035,
+      "estimated_travel_time": 1042,
+      "travel_type": 2,
+      "indoor": false,
+      "authentic": true,
+      "temporary": false,
+      "tags": [
+        "nature",
+        "jardin",
+        "culture",
+        "parc",
+        "gratuit"
+      ],
+      "rating_google": 4.7,
+      "reviews_count": 80000,
+      "image_url": "https://www.senat.fr/fileadmin/user_upload/image/jardin_luxembourg.jpg",
+      "external_url": "https://www.senat.fr/visite/jardin/index.html",
+      "is_free": true,
+      "is_student_free": true,
+      "language": "fr",
+      "open_hours": [
+        {
+          "day": "Lundi",
+          "open": "07:30",
+          "close": "20:00"
+        }
+      ],
+      "date_special": null,
+      "organizer": null
+    },
+    {
+      "id": "act_03",
+      "title": "Exploration du Marché Alimentaire de Bastille",
+      "description": "Découvrez le marché alimentaire de la Bastille, l'un des plus grands marchés alimentaires de Paris. Dégustez des produits locaux, discutez avec les commerçants et découvrez la gastronomie française dans une ambiance conviviale.",
+      "price_eur": 0,
+      "duration_min": 45,
+      "duration_max": 90,
+      "location": {
+        "name": "Marché Bastille",
+        "address": "Boulevard Richard Lenoir, 75011 Paris, France",
+        "lat": 48.857,
+        "lng": 2.3709
+      },
+      "distance_m": 3766,
+      "estimated_travel_time": 952,
+      "travel_type": 2,
+      "indoor": false,
+      "authentic": true,
+      "temporary": false,
+      "tags": [
+        "marché",
+        "gastronomie",
+        "culture",
+        "gratuit"
+      ],
+      "rating_google": 4.5,
+      "reviews_count": 2600,
+      "image_url": "https://media.parisinfo.com/1/88094/visuel/640x360/67610.jpg",
+      "external_url": "https://www.parisinfo.com/shopping/73109/Marche-Bastille",
+      "is_free": true,
+      "is_student_free": true,
+      "language": "fr",
+      "open_hours": [
+        {
+          "day": "Lundi",
+          "open": "07:00",
+          "close": "14:30"
+        }
+      ],
+      "date_special": null,
+      "organizer": {
+        "type": "association",
+        "name": "Marchés de Paris"
+      }
+    }
+  ],
+  "note": 8,
+  "note_reasons": "Les activités proposées sont gratuites, authentiques, proches du centre de Paris, et respectent le budget. Elles sont adaptées à un niveau d'énergie moyen et à la météo (majoritairement en extérieur, attention à la pluie). Le manque de propositions en intérieur ou de musées précis est dû à une absence de résultats web adaptés dans l'immédiat."
+}
+```
+
+# Claude 3 Opus Response Example
+```json
+{
+  "activities": [
+    {
+      "id": "act_01",
+      "title": "Musée d'Orsay",
+      "description": "Explorez l'une des plus riches collections d'art impressionniste et post-impressionniste au monde, installée dans une ancienne gare monumentale. Idéal pour une visite de 1h30 à 2h à l'abri de la pluie.",
+      "price_eur": 16,
+      "duration_min": 90,
+      "duration_max": 120,
+      "location": {
+        "name": "Musée d'Orsay",
+        "address": "1 Rue de la Légion d'Honneur, 75007 Paris",
+        "lat": 48.8599,
+        "lng": 2.3266
+      },
+      "distance_m": 2959,
+      "estimated_travel_time": 1376,
+      "travel_type": 2,
+      "indoor": true,
+      "authentic": false,
+      "temporary": false,
+      "tags": [
+        "musée",
+        "art",
+        "impressionnisme"
+      ],
+      "rating_google": 4.7,
+      "reviews_count": 76000,
+      "image_url": "https://upload.wikimedia.org/wikipedia/commons/3/30/Paris_-_Musee_d%27Orsay.jpg",
+      "external_url": "https://www.musee-orsay.fr",
+      "is_free": false,
+      "is_student_free": true,
+      "language": "fr",
+      "open_hours": [
+        {
+          "day": "Mardi",
+          "open": "09:30",
+          "close": "18:00"
+        },
+        {
+          "day": "Mercredi",
+          "open": "09:30",
+          "close": "18:00"
+        },
+        {
+          "day": "Jeudi",
+          "open": "09:30",
+          "close": "21:45"
+        },
+        {
+          "day": "Vendredi",
+          "open": "09:30",
+          "close": "18:00"
+        },
+        {
+          "day": "Samedi",
+          "open": "09:30",
+          "close": "18:00"
+        },
+        {
+          "day": "Dimanche",
+          "open": "09:30",
+          "close": "18:00"
+        }
+      ],
+      "date_special": null,
+      "organizer": {
+        "type": "établissement public",
+        "name": "Établissement public du Musée d'Orsay et de l'Orangerie"
+      }
+    },
+    {
+      "id": "act_02",
+      "title": "Centre Pompidou – Musée National d'Art Moderne",
+      "description": "Plongez dans l'art moderne et contemporain dans ce bâtiment emblématique à la structure « inside-out ». Collections permanentes accessibles en moins de 2 heures, avec vues panoramiques sur Paris depuis le 6ᵉ étage.",
+      "price_eur": 15,
+      "duration_min": 90,
+      "duration_max": 120,
+      "location": {
+        "name": "Centre Pompidou",
+        "address": "Place Georges-Pompidou, 75004 Paris",
+        "lat": 48.8606,
+        "lng": 2.3522
+      },
+      "distance_m": 608,
+      "estimated_travel_time": 498,
+      "travel_type": 1,
+      "indoor": true,
+      "authentic": false,
+      "temporary": false,
+      "tags": [
+        "musée",
+        "art",
+        "contemporain"
+      ],
+      "rating_google": 4.4,
+      "reviews_count": 61000,
+      "image_url": "https://upload.wikimedia.org/wikipedia/commons/3/3f/Centre_Georges_Pompidou_from_Notre_Dame_de_Paris%2C_August_2014.jpg",
+      "external_url": "https://www.centrepompidou.fr",
+      "is_free": false,
+      "is_student_free": true,
+      "language": "fr",
+      "open_hours": [
+        {
+          "day": "Lundi",
+          "open": "11:00",
+          "close": "21:00"
+        },
+        {
+          "day": "Mercredi",
+          "open": "11:00",
+          "close": "21:00"
+        },
+        {
+          "day": "Jeudi",
+          "open": "11:00",
+          "close": "21:00"
+        },
+        {
+          "day": "Vendredi",
+          "open": "11:00",
+          "close": "21:00"
+        },
+        {
+          "day": "Samedi",
+          "open": "11:00",
+          "close": "21:00"
+        },
+        {
+          "day": "Dimanche",
+          "open": "11:00",
+          "close": "21:00"
+        }
+      ],
+      "date_special": null,
+      "organizer": {
+        "type": "établissement public",
+        "name": "Centre Pompidou"
+      }
+    },
+    {
+      "id": "act_03",
+      "title": "Musée de l'Orangerie",
+      "description": "Admirez les célèbres Nymphéas de Claude Monet ainsi qu'une riche collection de chefs-d'œuvre modernes dans un cadre intimiste situé au cœur du Jardin des Tuileries.",
+      "price_eur": 12,
+      "duration_min": 60,
+      "duration_max": 90,
+      "location": {
+        "name": "Musée de l'Orangerie",
+        "address": "Jardin des Tuileries, 75001 Paris",
+        "lat": 48.8638,
+        "lng": 2.3226
+      },
+      "distance_m": 3056,
+      "estimated_travel_time": 800,
+      "travel_type": 2,
+      "indoor": true,
+      "authentic": false,
+      "temporary": false,
+      "tags": [
+        "musée",
+        "art",
+        "impressionnisme"
+      ],
+      "rating_google": 4.6,
+      "reviews_count": 14000,
+      "image_url": "https://upload.wikimedia.org/wikipedia/commons/2/2e/Paris_-_Musee_de_l%27Orangerie.jpg",
+      "external_url": "https://www.musee-orangerie.fr",
+      "is_free": false,
+      "is_student_free": true,
+      "language": "fr",
+      "open_hours": [
+        {
+          "day": "Lundi",
+          "open": "09:00",
+          "close": "18:00"
+        },
+        {
+          "day": "Mercredi",
+          "open": "09:00",
+          "close": "18:00"
+        },
+        {
+          "day": "Jeudi",
+          "open": "09:00",
+          "close": "18:00"
+        },
+        {
+          "day": "Vendredi",
+          "open": "09:00",
+          "close": "18:00"
+        },
+        {
+          "day": "Samedi",
+          "open": "09:00",
+          "close": "18:00"
+        },
+        {
+          "day": "Dimanche",
+          "open": "09:00",
+          "close": "18:00"
+        }
+      ],
+      "date_special": null,
+      "organizer": {
+        "type": "établissement public",
+        "name": "Établissement public du Musée d'Orsay et de l'Orangerie"
+      }
+    }
+  ],
+  "note": 8,
+  "note_reasons": "Les trois musées proposés sont réels, accessibles pour moins de 30 €, proches du centre de Paris (≤30 min de transport) et adaptés à une visite de 2 h. Les informations clés (prix, horaires, localisation, appréciations) sont fournies avec des sources fiables, mais certains chiffres (nombre exact d'avis) sont des estimations arrondies et pourraient être précisés avec une recherche plus pousée."
+}
