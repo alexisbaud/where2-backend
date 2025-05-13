@@ -2,5 +2,10 @@
   "name": "where2-backend",
   "version": "0.1.0",
   "private": true,
-  "description": "API backend pour l'application Where2"
+  "description": "API backend pour l'application Where2",
+  "dependencies": {
+    "@hono/node-server": "^1.14.1",
+    "hono": "^4.7.9",
+    "typescript": "^5.8.3"
+  }
 }
