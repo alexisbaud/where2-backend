@@ -4,6 +4,7 @@ import { SuggestRequestSchema, SuggestResponseSchema, Activity } from '../types'
 import { getCurrentWeather } from '../services/weather';
 import { generateActivities } from '../services/openai-o3'; // Utilisation du service o3
 import { calculateRoute } from '../services/maps';
+import { getDatetimeInfo } from '../utils/datetime';
 
 // Map mémoire pour stocker les activités générées
 const activitiesMemoryStore = new Map<string, Activity>();
@@ -28,14 +29,18 @@ export async function suggestO3Handler(c: Context): Promise<Response> {
       return c.json({ error: 'Invalid request format', details: validationResult.error.format() }, 400);
     }
     
-    const { answers, location, refine, excludeIds } = validationResult.data;
-    console.log('Validated data:', { answers, location, refine: refine || false, excludeIds: excludeIds || [] });
+    const { answers, location, refine, excludeIds, datetime } = validationResult.data;
+    console.log('Validated data:', { answers, location, refine: refine || false, excludeIds: excludeIds || [], datetime: datetime || 'Not provided' });
     
     try {
       // Récupérer les données météo
       console.log('Fetching weather data...');
       const weather = await getCurrentWeather(location.lat, location.lng);
       console.log('Weather data received:', weather);
+      
+      // Obtenir les informations de date et d'heure
+      const datetimeInfo = getDatetimeInfo(datetime);
+      console.log('Current datetime:', datetimeInfo);
       
       try {
         // Générer les suggestions d'activités avec OpenAI (modèle o3)
@@ -45,7 +50,8 @@ export async function suggestO3Handler(c: Context): Promise<Response> {
           location,
           weather,
           refine,
-          excludeIds
+          excludeIds,
+          datetime: datetimeInfo
         });
         
         console.log('OpenAI o3 response received with activities:', suggestionsData.activities.length);

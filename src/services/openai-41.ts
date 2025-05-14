@@ -22,6 +22,13 @@ interface GenerateActivityRequest {
   weather: WeatherData;
   refine?: boolean;
   excludeIds?: string[];
+  datetime?: {
+    date: string;  // Format YYYY-MM-DD
+    time: string;  // Format HH:MM
+    day: string;   // Jour de la semaine (Lundi, Mardi, etc.)
+    isHoliday?: boolean; // Optionnel: si c'est un jour férié
+    isWeekend?: boolean; // Optionnel: si c'est un weekend
+  };
 }
 
 // Interface pour la réponse de l'API
@@ -322,7 +329,7 @@ Retourne le JSON complet avec les champs manquants remplis.
  * @returns Prompt formaté
  */
 function buildPrompt(params: GenerateActivityRequest): string {
-  const { answers, location, weather, refine, excludeIds } = params;
+  const { answers, location, weather, refine, excludeIds, datetime } = params;
   
   // Placeholder pour le prompt (à développer avec vous)
   let prompt = `Tu es "Where2", un assistant IA spécialisé dans la recommandation d'activités en France.
@@ -395,11 +402,29 @@ Je viens d'annuler mon activité précédente: "${answers.canceled_activity || '
 La météo actuelle à ma position est: ${weather.description}, température de ${weather.temperature}°C, ressenti ${weather.feels_like}°C, humidité ${weather.humidity}%, vent ${weather.wind_speed} m/s.
 `;
 
+  // Ajouter des informations sur la date et l'heure actuelles
+  if (datetime) {
+    prompt += `
+Aujourd'hui nous sommes ${datetime.day} ${datetime.date}, il est actuellement ${datetime.time}.`;
+    
+    if (datetime.isWeekend) {
+      prompt += ` C'est le weekend.`;
+    }
+    
+    if (datetime.isHoliday) {
+      prompt += ` C'est un jour férié.`;
+    }
+    
+    prompt += `
+`;
+  }
+
   // Ajouter des instructions pour le format de réponse
   prompt += `
 Ma position actuelle est: latitude ${location.lat}, longitude ${location.lng}.
 
 Cherche sur internet des activités qui correspondent à mes critères près de ma position actuelle.
+Tiens compte de l'heure et du jour actuels pour tes suggestions (horaires d'ouverture, activités appropriées pour ce moment de la journée).
 Retourne exactement 3 activités différentes sous forme de JSON selon ce format:
 
 {

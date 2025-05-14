@@ -70,6 +70,7 @@ export const SuggestRequestSchema = z.object({
     lat: z.number(),
     lng: z.number(),
   }),
+  datetime: z.string().optional(),
   refine: z.boolean().optional(),
   excludeIds: z.array(z.string()).optional(),
 });
