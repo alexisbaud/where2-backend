@@ -29,7 +29,6 @@ Le backend nécessite plusieurs variables d'environnement pour fonctionner corre
 PORT=3000
 NODE_ENV=development
 OPENAI_API_KEY=votre_clé_api_openai
-OPENAI_MODEL=o3-mini
 WEATHER_API_KEY=votre_clé_api_openweathermap
 GOOGLE_MAPS_API_KEY=votre_clé_api_google_maps
 LOG_LEVEL=info
@@ -42,7 +41,7 @@ LOG_LEVEL=info
 | Méthode | Route | Description |
 |---------|-------|-------------|
 | GET | `/healthz` | Vérification de l'état du serveur |
-| POST | `/suggest` | Génération de suggestions d'activités (modèle configuré dans .env) |
+| POST | `/suggest-41` | Génération de suggestions d'activités (modèle gpt-4.1) |
 | POST | `/suggest-o3` | Génération de suggestions d'activités (modèle o3) |
 | GET | `/activity/:id` | Récupération des détails d'une activité spécifique |
 
@@ -63,7 +62,7 @@ GET /healthz
 ### 2. Génération de suggestions d'activités
 
 ```
-POST /suggest
+POST /suggest-41
 POST /suggest-o3
 ```
 
@@ -72,15 +71,15 @@ POST /suggest-o3
 {
   "answers": {
     "canceled_activity": "Visite du Louvre",
-    "same_type": "yes",
+    "same_type": true,
     "budget": 20,
     "travel_time": 30,
     "energy_level": 7,
     "available_time": 120,
     "participants_count": 2,
-    "indoor_preference": "indoor",
-    "authentic_preference": "authentic",
-    "temporary_preference": "temporary"
+    "indoor_preference": true,
+    "authentic_preference": true,
+    "temporary_preference": false
   },
   "location": {
     "lat": 48.8566,
@@ -159,9 +158,9 @@ GET /activity/:id
 
 ## Spécificités techniques
 
-- **Modèles IA**: Le service utilise deux options pour générer des recommandations:
-  - `/suggest` utilise le modèle configuré dans la variable d'environnement OPENAI_MODEL
-  - `/suggest-o3` utilise spécifiquement le modèle o3 d'OpenAI
+- **Modèles IA**: Le service utilise deux modèles différents pour générer des recommandations:
+  - `/suggest-41` utilise le modèle gpt-4.1 d'OpenAI
+  - `/suggest-o3` utilise le modèle o3 d'OpenAI
 
 - **Services intégrés**:
   - OpenWeatherMap: Récupération des données météo

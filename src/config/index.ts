@@ -15,7 +15,6 @@ const envSchema = z.object({
   
   // OpenAI
   OPENAI_API_KEY: z.string(),
-  OPENAI_MODEL: z.string().default('gpt-4.1'),
   
   // Météo (OpenWeatherMap)
   WEATHER_API_KEY: z.string(),

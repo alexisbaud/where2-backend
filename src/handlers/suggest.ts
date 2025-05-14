@@ -1,4 +1,4 @@
-// Handler pour la route /suggest
+// Handler pour la route /suggest-41
 import { Context } from 'hono';
 import { SuggestRequestSchema, SuggestResponseSchema, Activity } from '../types';
 import { getCurrentWeather } from '../services/weather';
@@ -9,11 +9,11 @@ import { calculateRoute } from '../services/maps';
 const activitiesMemoryStore = new Map<string, Activity>();
 
 /**
- * Handler pour la route POST /suggest
+ * Handler pour la route POST /suggest-41
  * Génère des suggestions d'activités en fonction des réponses de l'utilisateur et de sa localisation
  */
 export async function suggestHandler(c: Context): Promise<Response> {
-  console.log('POST /suggest - Start processing request');
+  console.log('POST /suggest-41 - Start processing request');
   const startTime = Date.now();
   
   try {
@@ -93,7 +93,7 @@ export async function suggestHandler(c: Context): Promise<Response> {
         
         // Calculer le temps d'exécution
         const executionTime = Date.now() - startTime;
-        console.log(`POST /suggest - Request completed in ${executionTime}ms`);
+        console.log(`POST /suggest-41 - Request completed in ${executionTime}ms`);
         
         return c.json(validationResponse.data);
       } catch (openaiError) {

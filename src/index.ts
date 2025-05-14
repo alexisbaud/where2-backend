@@ -7,7 +7,6 @@ import app from './routes';
 console.log('==== Where2 API Server ====');
 console.log(`Starting server in ${env.NODE_ENV} mode`);
 console.log(`Log level set to: ${env.LOG_LEVEL}`);
-console.log(`OpenAI model: ${env.OPENAI_MODEL}`);
 
 // Vérification des clés API requises
 const missingKeys = [];
@@ -45,7 +44,6 @@ if (env.LOG_LEVEL === 'debug') {
   console.log('PORT:', env.PORT);
   console.log('NODE_ENV:', env.NODE_ENV);
   console.log('OPENAI_API_KEY:', `${env.OPENAI_API_KEY.substring(0, 3)}...${env.OPENAI_API_KEY.substring(env.OPENAI_API_KEY.length - 3)}`);
-  console.log('OPENAI_MODEL:', env.OPENAI_MODEL);
   console.log('WEATHER_API_KEY:', `${env.WEATHER_API_KEY.substring(0, 3)}...${env.WEATHER_API_KEY.substring(env.WEATHER_API_KEY.length - 3)}`);
   console.log('GOOGLE_MAPS_API_KEY:', `${env.GOOGLE_MAPS_API_KEY.substring(0, 3)}...${env.GOOGLE_MAPS_API_KEY.substring(env.GOOGLE_MAPS_API_KEY.length - 3)}`);
   console.log('LOG_LEVEL:', env.LOG_LEVEL);
@@ -59,7 +57,7 @@ serve({
   console.log(`\n🚀 Server is running on http://localhost:${info.port}`);
   console.log('\nAvailable routes:');
   console.log('- GET  /healthz            Health check endpoint');
-  console.log('- POST /suggest            Generate activity suggestions (using model configured in .env)');
+  console.log('- POST /suggest-41         Generate activity suggestions (using model gpt-4.1)');
   console.log('- POST /suggest-o3         Generate activity suggestions (using model o3)');
   console.log('- GET  /activity/:id       Get details for a specific activity');
   console.log('\nPress Ctrl+C to stop the server');

@@ -23,7 +23,7 @@ app.use('*', cors({
 app.get('/healthz', healthHandler);
 
 // Routes principales
-app.post('/suggest', suggestHandler);
+app.post('/suggest-41', suggestHandler);
 app.post('/suggest-o3', suggestO3Handler);
 app.get('/activity/:id', getActivityHandler);
 

@@ -54,7 +54,18 @@ export const SuggestResponseSchema = z.object({
 });
 
 export const SuggestRequestSchema = z.object({
-  answers: z.record(z.string(), z.any()),
+  answers: z.object({
+    canceled_activity: z.string(),
+    same_type: z.boolean(),
+    budget: z.number().optional(),
+    travel_time: z.number().optional(),
+    energy_level: z.number().optional(),
+    available_time: z.number().optional(),
+    participants_count: z.number().optional(),
+    indoor_preference: z.boolean().optional(),
+    authentic_preference: z.boolean().optional(),
+    temporary_preference: z.boolean().optional(),
+  }).catchall(z.any()),
   location: z.object({
     lat: z.number(),
     lng: z.number(),

@@ -9,6 +9,9 @@ const openai = new OpenAI({
   apiKey: env.OPENAI_API_KEY,
 });
 
+// Définir explicitement le modèle à utiliser
+const OPENAI_MODEL = 'gpt-4.1';
+
 // Types pour les rôles des messages OpenAI
 type Role = 'user' | 'assistant' | 'system' | 'tool';
 
@@ -35,7 +38,7 @@ interface OpenAIActivityResponse {
  */
 export async function generateActivities(params: GenerateActivityRequest): Promise<OpenAIActivityResponse> {
   console.log('Starting activity generation with OpenAI');
-  console.log('Using model:', env.OPENAI_MODEL);
+  console.log('Using model:', OPENAI_MODEL);
   
   // Construire le prompt en fonction des paramètres
   const prompt = buildPrompt(params);
@@ -44,8 +47,8 @@ export async function generateActivities(params: GenerateActivityRequest): Promi
   
   try {
     console.log('Calling OpenAI API...');
-    // Utiliser directement le modèle configuré dans les variables d'environnement
-    const openaiModelToUse = env.OPENAI_MODEL;
+    // Utiliser directement le modèle défini dans la constante
+    const openaiModelToUse = OPENAI_MODEL;
     console.log('Selected model:', openaiModelToUse);
     
     // Initialiser la conversation
@@ -216,7 +219,7 @@ Retourne le JSON complet avec les champs manquants remplis.
 
   try {
     // Gérer la conversation avec OpenAI pour compléter les champs manquants
-    const openaiModelToUse = env.OPENAI_MODEL;
+    const openaiModelToUse = OPENAI_MODEL;
     
     // Initialiser la conversation
     const messages: Array<OpenAI.Chat.ChatCompletionMessageParam> = [{ 
@@ -328,8 +331,8 @@ Je viens d'annuler mon activité précédente: "${answers.canceled_activity || '
 `;
 
   // Ajouter le type d'activité si disponible
-  if (answers.same_type) {
-    prompt += `Je cherche ${answers.same_type === 'yes' ? 'le même type d\'activité' : answers.same_type === 'no' ? 'un type d\'activité différent' : 'n\'importe quel type d\'activité'}.
+  if (answers.same_type !== undefined) {
+    prompt += `Je cherche ${answers.same_type ? 'le même type d\'activité' : 'un type d\'activité différent'}.
 `;
   }
 
@@ -364,18 +367,18 @@ Je viens d'annuler mon activité précédente: "${answers.canceled_activity || '
 `;
     }
     
-    if (answers.indoor_preference) {
-      prompt += `Je préfère une activité ${answers.indoor_preference === 'indoor' ? 'en intérieur' : 'en extérieur'}.
+    if (answers.indoor_preference !== undefined) {
+      prompt += `Je préfère une activité ${answers.indoor_preference ? 'en intérieur' : 'en extérieur'}.
 `;
     }
     
-    if (answers.authentic_preference) {
-      prompt += `Je préfère une activité ${answers.authentic_preference === 'authentic' ? 'authentique' : 'touristique'}.
+    if (answers.authentic_preference !== undefined) {
+      prompt += `Je préfère une activité ${answers.authentic_preference ? 'authentique' : 'touristique'}.
 `;
     }
     
-    if (answers.temporary_preference) {
-      prompt += `Je préfère un ${answers.temporary_preference === 'temporary' ? 'événement éphémère' : 'lieu permanent'}.
+    if (answers.temporary_preference !== undefined) {
+      prompt += `Je préfère un ${answers.temporary_preference ? 'événement éphémère' : 'lieu permanent'}.
 `;
     }
     
