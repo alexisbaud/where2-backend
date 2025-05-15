@@ -34,7 +34,7 @@ export const mockDelayHandler = async (c: Context) => {
     
     // Simuler un traitement de 60 secondes
     console.log('Simulating long processing time (60 seconds)...');
-    await new Promise(resolve => setTimeout(resolve, 60000));
+    await new Promise(resolve => setTimeout(resolve, 20000));
     
     // Données factices qui ressemblent à la structure attendue mais sans utiliser l'IA
     const mockData = {
