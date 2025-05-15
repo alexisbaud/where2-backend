@@ -3,12 +3,12 @@ import { Context } from 'hono';
 import { SuggestRequestSchema, SuggestResponseSchema } from '../types';
 
 /**
- * Renvoie une réponse JSON factice après un délai de 60 secondes
+ * Renvoie une réponse JSON factice après un délai de 5 secondes
  * Cette route est utilisée pour tester le comportement de l'application en cas d'attente prolongée
  * Accepte les mêmes paramètres que la route /suggest-o3
  */
 export const mockDelayHandler = async (c: Context) => {
-  console.log('🕒 [POST /mock-delay] Début du traitement (délai de 60 secondes)');
+  console.log('🕒 [POST /mock-delay] Début du traitement (délai de 5 secondes)');
   const startTime = Date.now();
   
   try {
@@ -32,9 +32,9 @@ export const mockDelayHandler = async (c: Context) => {
       excludeIds: excludeIds?.length || 0
     });
     
-    // Simuler un traitement de 60 secondes
-    console.log('Simulating long processing time (60 seconds)...');
-    await new Promise(resolve => setTimeout(resolve, 20000));
+    // Simuler un traitement de 5 secondes
+    console.log('Simulating long processing time (5 seconds)...');
+    await new Promise(resolve => setTimeout(resolve, 5000));
     
     // Données factices qui ressemblent à la structure attendue mais sans utiliser l'IA
     const mockData = {
@@ -42,8 +42,7 @@ export const mockDelayHandler = async (c: Context) => {
         {
           id: "mock-activity-1",
           title: "Visite du musée d'art moderne",
-          description: "Une expérience culturelle dans un musée renommé",
-          long_description: "Découvrez les collections permanentes et les expositions temporaires de ce musée d'art moderne qui présente des œuvres d'artistes contemporains nationaux et internationaux.",
+          description: "Une expérience culturelle immersive au cœur de l'art contemporain, dans l'un des musées les plus emblématiques de la capitale. Vous découvrirez des œuvres exceptionnelles d'artistes nationaux et internationaux, à travers des expositions permanentes et temporaires soigneusement organisées. Le bâtiment lui-même est une œuvre architecturale remarquable, situé dans un quartier historique prestigieux offrant une vue imprenable sur la Seine.",
           price_eur: 12.5,
           duration_min: 60,
           duration_max: 180,
@@ -113,8 +112,7 @@ export const mockDelayHandler = async (c: Context) => {
         {
           id: "mock-activity-2",
           title: "Balade dans le Jardin du Luxembourg",
-          description: "Une promenade relaxante dans un parc historique",
-          long_description: "Profitez d'une après-midi dans l'un des plus beaux jardins de Paris. Le Jardin du Luxembourg offre de magnifiques espaces verts, des fontaines et des statues pour une promenade agréable.",
+          description: "Une évasion verdoyante dans ce joyau historique au cœur de Paris, où nature et art se rencontrent harmonieusement. Ce jardin à la française, créé en 1612 à la demande de Marie de Médicis, s'étend sur 25 hectares. Vous y découvrirez plus de 106 statues, des fontaines majestueuses dont la célèbre fontaine Médicis, un verger conservatoire avec des variétés anciennes de pommiers, et un rucher école. Les parisiens s'y retrouvent pour pratiquer le jogging, jouer aux échecs, profiter du kiosque à musique ou simplement se détendre près du grand bassin central où les enfants font naviguer des voiliers miniatures.",
           price_eur: 0,
           duration_min: 30,
           duration_max: 120,
@@ -154,8 +152,7 @@ export const mockDelayHandler = async (c: Context) => {
         {
           id: "mock-activity-3",
           title: "Concert de jazz au Sunset/Sunside",
-          description: "Une soirée musicale dans un club de jazz emblématique",
-          long_description: "Le Sunset/Sunside est l'un des clubs de jazz les plus réputés de Paris. Venez écouter des musiciens talentueux dans une ambiance chaleureuse et intime.",
+          description: "Une soirée musicale d'exception dans ce club mythique de la rue des Lombards, véritable temple du jazz parisien depuis plus de 40 ans. Dans une atmosphère intimiste et chaleureuse, vous serez à quelques mètres seulement des musiciens, permettant une expérience sensorielle incomparable. Le Sunset/Sunside est reconnu pour la qualité de son acoustique et sa programmation exigeante qui mêle talents émergents et artistes internationaux renommés. L'établissement est composé de deux salles complémentaires : le Sunset en sous-sol, davantage orienté vers le jazz électrique et les musiques actuelles, et le Sunside au rez-de-chaussée, privilégiant le jazz acoustique. Un bar propose une sélection de boissons et cocktails à déguster pendant les performances.",
           price_eur: 25,
           duration_min: 90,
           duration_max: 120,
@@ -208,7 +205,7 @@ export const mockDelayHandler = async (c: Context) => {
     
     // Calculer le temps d'exécution
     const executionTime = Date.now() - startTime;
-    console.log(`✅ [POST /mock-delay] Fin du traitement (après délai de 60 secondes) - Request completed in ${executionTime}ms`);
+    console.log(`✅ [POST /mock-delay] Fin du traitement (après délai de 5 secondes) - Request completed in ${executionTime}ms`);
     
     return c.json(validationResponse.data);
   } catch (error) {
