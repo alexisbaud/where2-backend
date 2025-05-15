@@ -5,9 +5,61 @@ import { getCurrentWeather } from '../services/weather';
 import { generateActivities } from '../services/openai-41';
 import { calculateRoute } from '../services/maps';
 import { getDatetimeInfo } from '../utils/datetime';
+import { z } from 'zod';
+import { searchActivityImage } from '../services';
 
 // Map mémoire pour stocker les activités générées
 const activitiesMemoryStore = new Map<string, Activity>();
+
+/**
+ * Enrichit les activités avec des informations supplémentaires
+ * - Calcul de distance et temps de trajet
+ * - Ajout d'images via SerpAPI
+ */
+async function enrichActivities(activities: Activity[], userLat: number, userLng: number): Promise<Activity[]> {
+  console.log(`Enriching ${activities.length} activities with additional data`);
+  
+  // Traiter chaque activité en parallèle
+  const enrichedActivities = await Promise.all(activities.map(async (activity) => {
+    const enrichedActivity = { ...activity };
+    
+    try {
+      // Calculer la distance et le temps de trajet
+      if (activity.location && activity.location.lat && activity.location.lng) {
+        console.log(`Calculating route for activity "${activity.title}"`);
+        const routeData = await calculateRoute(
+          userLat,
+          userLng,
+          activity.location.lat,
+          activity.location.lng
+        );
+        
+        enrichedActivity.distance_m = routeData.distance_m;
+        enrichedActivity.estimated_travel_time = routeData.estimated_travel_time;
+        enrichedActivity.travel_type = routeData.travel_type;
+      }
+      
+      // Rechercher une image pour l'activité
+      if (activity.title) {
+        console.log(`Searching image for activity "${activity.title}"`);
+        try {
+          const imageData = await searchActivityImage(activity.title);
+          enrichedActivity.image_url = imageData.image_url;
+        } catch (imageError) {
+          console.warn(`Could not find image for activity "${activity.title}":`, imageError);
+          // En cas d'erreur, laisser image_url à null
+        }
+      }
+      
+      return enrichedActivity;
+    } catch (error) {
+      console.error(`Error enriching activity "${activity.title}":`, error);
+      return activity; // En cas d'erreur, retourner l'activité inchangée
+    }
+  }));
+  
+  return enrichedActivities;
+}
 
 /**
  * Handler pour la route POST /suggest-41
@@ -59,36 +111,16 @@ export async function suggestHandler(c: Context): Promise<Response> {
         
         console.log('OpenAI response received with activities:', suggestionsData.activities.length);
         
-        // Enrichir chaque activité avec les données de trajet de Google Maps
-        console.log('Enriching activities with route data...');
+        // Enrichir les activités avec les distances, temps de trajet et images
+        console.log('Enriching activities with additional data...');
+        suggestionsData.activities = await enrichActivities(
+          suggestionsData.activities,
+          location.lat,
+          location.lng
+        );
+        
+        // Stocker les activités dans le store en mémoire
         for (const activity of suggestionsData.activities) {
-          if (activity.location && activity.location.lat && activity.location.lng) {
-            try {
-              const routeData = await calculateRoute(
-                location.lat,
-                location.lng,
-                activity.location.lat,
-                activity.location.lng
-              );
-              
-              // Mettre à jour les champs de distance et temps de trajet
-              activity.distance_m = routeData.distance_m;
-              activity.estimated_travel_time = routeData.estimated_travel_time;
-              activity.travel_type = routeData.travel_type;
-              console.log(`Route data for activity ${activity.id}:`, { 
-                distance_m: routeData.distance_m,
-                estimated_travel_time: routeData.estimated_travel_time,
-                travel_type: routeData.travel_type 
-              });
-            } catch (routeError) {
-              console.warn(`Failed to calculate route for activity ${activity.id}:`, routeError);
-              // Laisser les champs à null en cas d'erreur
-            }
-          } else {
-            console.warn(`Activity ${activity.id} has invalid location:`, activity.location);
-          }
-          
-          // Stocker l'activité dans la mémoire pour la route GET /activity/:id
           activitiesMemoryStore.set(activity.id, activity);
         }
         

@@ -164,7 +164,7 @@ Les deux routes fournissent des fonctionnalités similaires mais utilisent des m
 | `location` | Informations sur le lieu (nom, adresse, coordonnées) |
 | `distance_m` | Distance en mètres depuis la position de l'utilisateur |
 | `estimated_travel_time` | Temps de trajet estimé en minutes |
-| `travel_type` | Type de transport recommandé: 1 = marche, 2 = vélo, 3 = transport en commun, 4 = voiture |
+| `travel_type` | Type de transport recommandé: 1 = marche, 2 = transport en commun |
 | `indoor` | Si l'activité est en intérieur (`true`) ou extérieur (`false`) |
 | `authentic` | Si l'activité est authentique (`true`) ou touristique (`false`) |
 | `temporary` | Si c'est un événement temporaire (`true`) ou un lieu permanent (`false`) |

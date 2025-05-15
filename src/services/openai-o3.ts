@@ -452,7 +452,7 @@ Retourne exactement 3 activités différentes sous forme de JSON selon ce format
       "tags": ["tag1", "tag2"], // Liste de tags pertinents
       "rating_google": 0.0, // Note Google si disponible, ou null
       "reviews_count": 0, // Nombre d'avis, ou null si non disponible
-      "image_url": "URL d'une image", // URL d'une image représentative, ou null
+      "image_url": null, // Toujours mettre null, les images seront ajoutées par le backend
       "external_url": "URL externe", // URL du site ou Google Maps, ou null
       "is_free": true/false, // Indique si l'activité est gratuite
       "is_student_free": true/false, // Indique si gratuit pour étudiants
@@ -471,10 +471,11 @@ Retourne exactement 3 activités différentes sous forme de JSON selon ce format
       }
     }
   ],
-  "note": 8, // Auto-évaluation de 1 à 10 de la qualité de ta réponse
+  "note": x, // Auto-évaluation de 1 à 10 de la qualité de ta réponse
   "note_reasons": "Explication de ta note" // Pourquoi tu t'es donné cette note
 }
 
+IMPORTANT: Pour le champ 'image_url', mets TOUJOURS 'null'. Les images seront ajoutées par le backend.
 N'invente pas d'informations. Si tu ne trouves pas une donnée, indique null pour ce champ.
 Assure-toi que toutes les activités sont réelles et actuellement disponibles, et qu'elles correspondent bien aux critères fournis.
 `;

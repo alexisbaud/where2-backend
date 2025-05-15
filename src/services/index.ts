@@ -4,3 +4,4 @@
 export * from './maps';
 export * from './openai-41';
 export * from './weather';
+export * from './image';

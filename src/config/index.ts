@@ -22,6 +22,9 @@ const envSchema = z.object({
   // Google Maps
   GOOGLE_MAPS_API_KEY: z.string(),
   
+  // SerpAPI (Google Images)
+  SERPAPI_API_KEY: z.string(),
+  
   // Logging
   LOG_LEVEL: z.enum(['debug', 'info', 'warn', 'error']).default('info'),
 });
