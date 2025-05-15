@@ -1,5 +1,5 @@
 // Service pour interagir avec l'API Google Maps
-import { Client, TravelMode, Language } from '@googlemaps/google-maps-services-js';
+import { Client, TravelMode, Language, PlaceInputType } from '@googlemaps/google-maps-services-js';
 import { env, WALKING_THRESHOLD_MIN } from '../config';
 
 // Initialiser le client Google Maps
@@ -12,13 +12,104 @@ export interface RouteData {
 }
 
 /**
+ * Obtient des coordonnées précises à partir du titre et de l'adresse
+ * @param title Titre ou nom du lieu
+ * @param address Adresse du lieu
+ * @returns Coordonnées précises du lieu ou null si non trouvé
+ */
+export async function getAccurateCoordinates(title: string, address: string): Promise<{lat: number, lng: number} | null> {
+  // Vérifier si l'adresse contient déjà une ville, sinon ajouter "Paris" par défaut
+  // car la plupart des activités sont probablement à Paris
+  const hasCity = /paris|lyon|marseille|toulouse|nice|nantes|strasbourg|montpellier|bordeaux|lille/i.test(address);
+  
+  let searchQuery = `${title}, ${address}`;
+  if (!hasCity) {
+    searchQuery = `${title}, ${address}, Paris, France`;
+    console.log(`Address lacks city information, adding default city: "${searchQuery}"`);
+  }
+  
+  console.log(`Getting accurate coordinates for: "${searchQuery}"`);
+  
+  try {
+    const response = await client.findPlaceFromText({
+      params: {
+        input: searchQuery,
+        inputtype: PlaceInputType.textQuery,
+        fields: ['geometry', 'formatted_address', 'name'],
+        key: env.GOOGLE_MAPS_API_KEY,
+        language: Language.fr
+      }
+    });
+    
+    if (response.data.candidates && response.data.candidates.length > 0) {
+      const place = response.data.candidates[0];
+      
+      if (!place.geometry || !place.geometry.location) {
+        console.warn('Place found but no geometry information available');
+        return null;
+      }
+      
+      const location = place.geometry.location;
+      
+      console.log(`Place found: "${place.name || 'Unnamed'}" at ${place.formatted_address || 'Unknown address'}`);
+      console.log(`Coordinates: (${location.lat}, ${location.lng})`);
+      
+      return {
+        lat: location.lat,
+        lng: location.lng
+      };
+    }
+    
+    // Si la première recherche ne trouve rien, essayer une recherche plus générale
+    if (!hasCity) {
+      console.log('Trying more generic search with only the title...');
+      
+      const fallbackResponse = await client.findPlaceFromText({
+        params: {
+          input: `${title}, Paris, France`,
+          inputtype: PlaceInputType.textQuery,
+          fields: ['geometry', 'formatted_address', 'name'],
+          key: env.GOOGLE_MAPS_API_KEY,
+          language: Language.fr
+        }
+      });
+      
+      if (fallbackResponse.data.candidates && fallbackResponse.data.candidates.length > 0) {
+        const fallbackPlace = fallbackResponse.data.candidates[0];
+        
+        if (fallbackPlace.geometry && fallbackPlace.geometry.location) {
+          const fallbackLocation = fallbackPlace.geometry.location;
+          
+          console.log(`Fallback place found: "${fallbackPlace.name || 'Unnamed'}" at ${fallbackPlace.formatted_address || 'Unknown address'}`);
+          console.log(`Fallback coordinates: (${fallbackLocation.lat}, ${fallbackLocation.lng})`);
+          
+          return {
+            lat: fallbackLocation.lat,
+            lng: fallbackLocation.lng
+          };
+        }
+      }
+    }
+    
+    console.warn(`No places found for query: "${searchQuery}"`);
+    return null;
+  } catch (error) {
+    console.error('Error finding place:', error);
+    if (error instanceof Error) {
+      console.error('Error message:', error.message);
+    }
+    return null;
+  }
+}
+
+/**
  * Calcule la distance et le temps de trajet entre deux points
  * Utilise le mode à pied si le trajet est inférieur à WALKING_THRESHOLD_MIN (15 min), sinon utilise les transports en commun
  * @param originLat Latitude d'origine
  * @param originLng Longitude d'origine
  * @param destLat Latitude de destination
  * @param destLng Longitude de destination
- * @returns Données de trajet (distance, temps estimé, type de trajet)
+ * @returns Données de trajet (distance, temps estimé en secondes, type de trajet)
  */
 export async function calculateRoute(
   originLat: number, 
@@ -55,7 +146,7 @@ export async function calculateRoute(
     
     const walkingRoute = walkingResult.data.routes[0];
     const walkingDuration = walkingRoute.legs[0].duration.value; // en secondes
-    const walkingDurationMinutes = walkingDuration / 60;
+    const walkingDurationMinutes = walkingDuration / 60; // Pour les logs et la comparaison
     
     console.log(`Walking route found: ${walkingRoute.summary}`);
     console.log(`Walking duration: ${walkingDurationMinutes.toFixed(1)} minutes (${walkingDuration} seconds)`);
@@ -66,7 +157,7 @@ export async function calculateRoute(
       console.log(`Walking duration (${walkingDurationMinutes.toFixed(1)} min) is below threshold (${WALKING_THRESHOLD_MIN} min), using walking mode`);
       return {
         distance_m: walkingRoute.legs[0].distance.value,
-        estimated_travel_time: walkingDuration,
+        estimated_travel_time: walkingDuration, // Conserver les secondes
         travel_type: 1 // à pied
       };
     }
@@ -93,7 +184,7 @@ export async function calculateRoute(
         console.warn('No transit routes found in Google Maps response, falling back to walking mode');
         return {
           distance_m: walkingRoute.legs[0].distance.value,
-          estimated_travel_time: walkingDuration,
+          estimated_travel_time: walkingDuration, // Conserver les secondes
           travel_type: 1 // à pied
         };
       }
@@ -102,13 +193,16 @@ export async function calculateRoute(
       
       // Si un itinéraire en transport en commun est trouvé, l'utiliser
       if (transitRoute) {
+        const transitDuration = transitRoute.legs[0].duration.value; // en secondes
+        const transitDurationMinutes = transitDuration / 60; // Pour les logs
+        
         console.log(`Transit route found: ${transitRoute.summary || 'No summary'}`);
-        console.log(`Transit duration: ${(transitRoute.legs[0].duration.value / 60).toFixed(1)} minutes (${transitRoute.legs[0].duration.value} seconds)`);
+        console.log(`Transit duration: ${transitDurationMinutes.toFixed(1)} minutes (${transitDuration} seconds)`);
         console.log(`Transit distance: ${transitRoute.legs[0].distance.text} (${transitRoute.legs[0].distance.value} meters)`);
         
         return {
           distance_m: transitRoute.legs[0].distance.value,
-          estimated_travel_time: transitRoute.legs[0].duration.value,
+          estimated_travel_time: transitDuration, // Conserver les secondes
           travel_type: 2 // transports en commun
         };
       }
@@ -122,7 +216,7 @@ export async function calculateRoute(
     console.log('Using walking mode as fallback');
     return {
       distance_m: walkingRoute.legs[0].distance.value,
-      estimated_travel_time: walkingDuration,
+      estimated_travel_time: walkingDuration, // Conserver les secondes
       travel_type: 1 // à pied
     };
     

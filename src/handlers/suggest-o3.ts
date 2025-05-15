@@ -1,7 +1,7 @@
 // Handler pour la route POST /suggest-o3 (OpenAI o3)
 import { Context } from 'hono';
 import { Activity, SuggestRequestSchema, SuggestResponseSchema } from '../types';
-import { calculateRoute, searchActivityImage } from '../services';
+import { calculateRoute, searchActivityImage, getAccurateCoordinates } from '../services';
 import { generateActivities, PreferenceChoice, EnvironmentPreference, ExperienceType, EventPermanence } from '../services/openai-o3'; // Utilisation du service o3
 import { getCurrentWeather } from '../services/weather';
 import { getDatetimeInfo } from '../utils/datetime';
@@ -24,12 +24,39 @@ async function enrichActivities(activities: Activity[], userLat: number, userLng
     try {
       // Calculer la distance et le temps de trajet
       if (activity.location && activity.location.lat && activity.location.lng) {
-        console.log(`Calculating route for activity "${activity.title}"`);
+        console.log(`Processing activity "${activity.title}" at ${activity.location.address}`);
+        
+        // Tenter d'obtenir des coordonnées plus précises via Google Places
+        let destLat = activity.location.lat;
+        let destLng = activity.location.lng;
+        
+        if (activity.title && activity.location.address) {
+          console.log(`Getting more accurate coordinates for: ${activity.title}, ${activity.location.address}`);
+          const accurateCoords = await getAccurateCoordinates(activity.title, activity.location.address);
+          
+          if (accurateCoords) {
+            console.log(`Using more accurate coordinates: (${accurateCoords.lat}, ${accurateCoords.lng}) instead of (${destLat}, ${destLng})`);
+            destLat = accurateCoords.lat;
+            destLng = accurateCoords.lng;
+            
+            // Mettre à jour les coordonnées de l'activité avec les valeurs plus précises
+            enrichedActivity.location = {
+              ...enrichedActivity.location,
+              lat: accurateCoords.lat,
+              lng: accurateCoords.lng
+            };
+          } else {
+            console.log(`No accurate coordinates found, using original coordinates: (${destLat}, ${destLng})`);
+          }
+        }
+        
+        // Calculer la route avec les coordonnées les plus précises disponibles
+        console.log(`Calculating route for activity "${activity.title}" using coordinates (${destLat}, ${destLng})`);
         const routeData = await calculateRoute(
           userLat,
           userLng,
-          activity.location.lat,
-          activity.location.lng
+          destLat,
+          destLng
         );
         
         enrichedActivity.distance_m = routeData.distance_m;
