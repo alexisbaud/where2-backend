@@ -8,7 +8,7 @@ const client = new Client({});
 export interface RouteData {
   distance_m: number;
   estimated_travel_time: number; // en secondes
-  travel_type: number; // 1 = à pied, 2 = transports en commun
+  travel_type: 1 | 2; // 1 = à pied, 2 = transports en commun
 }
 
 /**

@@ -30,7 +30,7 @@ export const ActivitySchema = z.object({
   location: LocationSchema,
   distance_m: z.number().int().nullable(),
   estimated_travel_time: z.number().int().nullable(),
-  travel_type: z.number().int().nullable(),
+  travel_type: z.union([z.literal(1), z.literal(2)]).nullable(),
   indoor: z.boolean(),
   authentic: z.boolean(),
   temporary: z.boolean(),
@@ -53,18 +53,27 @@ export const SuggestResponseSchema = z.object({
   note_reasons: z.string(),
 });
 
+// Énumérations pour les choix ternaires
+const SameTypeSchema = z.enum(['yes', 'no', 'indifferent']);
+
+const EnvironmentPreferenceSchema = z.enum(['indoor', 'outdoor', 'indifferent']);
+
+const ExperienceTypeSchema = z.enum(['authentic', 'touristic', 'indifferent']);
+
+const EventPermanenceSchema = z.enum(['ephemeral', 'permanent', 'indifferent']);
+
 export const SuggestRequestSchema = z.object({
   answers: z.object({
     canceled_activity: z.string(),
-    same_type: z.boolean(),
+    same_type: SameTypeSchema.optional(),
     budget: z.number().optional(),
     travel_time: z.number().optional(),
     energy_level: z.number().optional(),
     available_time: z.number().optional(),
     participants_count: z.number().optional(),
-    indoor_preference: z.boolean().optional(),
-    authentic_preference: z.boolean().optional(),
-    temporary_preference: z.boolean().optional(),
+    indoor_preference: EnvironmentPreferenceSchema.optional(),
+    authentic_preference: ExperienceTypeSchema.optional(),
+    temporary_preference: EventPermanenceSchema.optional(),
   }).catchall(z.any()),
   location: z.object({
     lat: z.number(),

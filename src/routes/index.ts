@@ -27,7 +27,7 @@ app.post('/suggest-41', suggestHandler);
 app.post('/suggest-o3', suggestO3Handler);
 app.get('/activity/:id', getActivityHandler);
 
-// Route de test avec délai de 60 secondes
+// Route de test avec délai de 5 secondes
 app.post('/mock-delay', mockDelayHandler);
 
 // Route de fallback pour les routes non définies

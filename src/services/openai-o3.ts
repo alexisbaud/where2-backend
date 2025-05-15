@@ -15,9 +15,48 @@ const OPENAI_MODEL = 'o3';
 // Types pour les rôles des messages OpenAI
 type Role = 'user' | 'assistant' | 'system' | 'tool';
 
+// Énumérations pour les choix ternaires
+export enum PreferenceChoice {
+  Yes = 'yes',
+  No = 'no',
+  Indifferent = 'indifferent'
+}
+
+export enum EnvironmentPreference {
+  Indoor = 'indoor',
+  Outdoor = 'outdoor',
+  Indifferent = 'indifferent'
+}
+
+export enum ExperienceType {
+  Authentic = 'authentic',
+  Touristic = 'touristic',
+  Indifferent = 'indifferent'
+}
+
+export enum EventPermanence {
+  Ephemeral = 'ephemeral',
+  Permanent = 'permanent',
+  Indifferent = 'indifferent'
+}
+
 // Interface pour la requête à OpenAI
 interface GenerateActivityRequest {
-  answers: Record<string, any>;
+  answers: {
+    // Flux Initial (Q1-Q6)
+    canceled_activity: string;                       // Q1: Activité annulée (texte libre)
+    same_type?: PreferenceChoice;                    // Q2: Type d'activité (yes/no/indifferent)
+    budget?: number;                                 // Q3: Budget (0-100€)
+    travel_time?: number;                            // Q4: Temps de transport (5-60 minutes)
+    energy_level?: number;                           // Q5: Niveau d'énergie (1-7)
+    available_time?: number;                         // Q6: Temps libre disponible (30-240 minutes)
+    
+    // Flux de Raffinement (F2-F5)
+    participants_count?: number;                     // F2: Nombre de participants (1-5+)
+    indoor_preference?: EnvironmentPreference;       // F3: Préférence d'environnement (indoor/outdoor/indifferent)
+    authentic_preference?: ExperienceType;           // F4: Type d'expérience (authentic/touristic/indifferent)
+    temporary_preference?: EventPermanence;          // F5: Permanence de l'activité (ephemeral/permanent/indifferent)
+  };
   location: { lat: number; lng: number };
   weather: WeatherData;
   refine?: boolean;
@@ -65,7 +104,7 @@ export async function generateActivities(params: GenerateActivityRequest): Promi
     
     // Gérer la conversation avec OpenAI, y compris les allers-retours pour les tool_calls
     let finalContent: string | null = null;
-    let maxIterations = 5; // Limite du nombre d'itérations pour éviter les boucles infinies
+    let maxIterations = 10; // Augmenté de 5 à 10 pour permettre plus d'itérations et de réflexions
     
     for (let iteration = 0; iteration < maxIterations && !finalContent; iteration++) {
       console.log(`Conversation iteration ${iteration + 1}`);
@@ -235,7 +274,7 @@ Retourne le JSON complet avec les champs manquants remplis.
     
     // Gérer la conversation avec OpenAI, y compris les allers-retours pour les tool_calls
     let finalContent: string | null = null;
-    let maxIterations = 5; // Limite du nombre d'itérations pour éviter les boucles infinies
+    let maxIterations = 10; // Augmenté de 5 à 10 pour permettre plus d'itérations et de réflexions
     
     for (let iteration = 0; iteration < maxIterations && !finalContent; iteration++) {
       console.log(`Fill missing fields - iteration ${iteration + 1}`);
@@ -330,7 +369,7 @@ Retourne le JSON complet avec les champs manquants remplis.
 function buildPrompt(params: GenerateActivityRequest): string {
   const { answers, location, weather, refine, excludeIds, datetime } = params;
   
-  // Placeholder pour le prompt (à développer avec vous)
+  // Commencer le prompt avec l'introduction
   let prompt = `Tu es "Where2", un assistant IA spécialisé dans la recommandation d'activités en France.
   
 Je viens d'annuler mon activité précédente: "${answers.canceled_activity || 'une activité'}".
@@ -338,55 +377,169 @@ Je viens d'annuler mon activité précédente: "${answers.canceled_activity || '
 
   // Ajouter le type d'activité si disponible
   if (answers.same_type !== undefined) {
-    prompt += `Je cherche ${answers.same_type ? 'le même type d\'activité' : 'un type d\'activité différent'}.
+    let preferenceText: string;
+    switch(answers.same_type) {
+      case PreferenceChoice.Yes:
+        preferenceText = 'le même type d\'activité';
+        break;
+      case PreferenceChoice.No:
+        preferenceText = 'un type d\'activité différent';
+        break;
+      case PreferenceChoice.Indifferent:
+        preferenceText = 'n\'importe quel type d\'activité';
+        break;
+      default:
+        preferenceText = 'le même type d\'activité'; // Valeur par défaut
+    }
+    prompt += `Je cherche ${preferenceText}.
 `;
   }
 
   // Ajouter le budget
-  if (answers.budget) {
-    prompt += `Mon budget maximum est de ${answers.budget} euros.
+  if (answers.budget !== undefined) {
+    if (answers.budget === 0) {
+      prompt += `Je n'ai pas de budget (gratuit uniquement).
 `;
+    } else if (answers.budget === 100) {
+      prompt += `Le budget n'est pas un problème pour moi.
+`;
+    } else {
+      prompt += `Mon budget maximum est de ${answers.budget} euros.
+`;
+    }
   }
 
   // Ajouter le temps de trajet
-  if (answers.travel_time) {
-    prompt += `Je souhaite que le temps de trajet n'excède pas ${answers.travel_time} minutes.
+  if (answers.travel_time !== undefined) {
+    if (answers.travel_time === 5) {
+      prompt += `Je souhaite une activité très proche (maximum 5 minutes de trajet).
 `;
+    } else if (answers.travel_time === 60) {
+      prompt += `Je peux me déplacer jusqu'à 1 heure pour cette activité.
+`;
+    } else {
+      prompt += `Je souhaite que le temps de trajet n'excède pas ${answers.travel_time} minutes.
+`;
+    }
   }
 
   // Ajouter le niveau d'énergie
-  if (answers.energy_level) {
-    // Convertir l'échelle 1-7 du frontend en échelle 1-10 pour le prompt
+  if (answers.energy_level !== undefined) {
+    // Créer un texte descriptif selon le niveau d'énergie
+    let energyText: string;
+    switch(answers.energy_level) {
+      case 1:
+        energyText = "extrêmement faible (Je vais faire un malaise)";
+        break;
+      case 2:
+        energyText = "très faible (Je suis épuisé(e))";
+        break;
+      case 3:
+        energyText = "faible (Je manque d'énergie)";
+        break;
+      case 4:
+        energyText = "moyen (Ça peut aller)";
+        break;
+      case 5:
+        energyText = "bon (Je me sens bien)";
+        break;
+      case 6:
+        energyText = "très bon (J'ai la pêche)";
+        break;
+      case 7:
+        energyText = "excellent (Je suis en pleine forme)";
+        break;
+      default:
+        energyText = "moyen";
+    }
+    
+    // Convertir aussi l'échelle 1-7 du frontend en échelle 1-10 pour le prompt
     const energyLevelMapped = Math.round((answers.energy_level / 7) * 10);
-    prompt += `Mon niveau d'énergie est de ${energyLevelMapped}/10.
+    prompt += `Mon niveau d'énergie est ${energyText}, soit ${energyLevelMapped}/10.
 `;
   }
 
   // Ajouter le temps disponible
-  if (answers.available_time) {
-    prompt += `J'ai ${answers.available_time} minutes de temps libre disponible.
+  if (answers.available_time !== undefined) {
+    // Formater le temps disponible en heures et minutes si nécessaire
+    if (answers.available_time < 60) {
+      prompt += `J'ai ${answers.available_time} minutes de temps libre disponible.
 `;
+    } else {
+      const hours = Math.floor(answers.available_time / 60);
+      const minutes = answers.available_time % 60;
+      if (minutes === 0) {
+        prompt += `J'ai ${hours} heure${hours > 1 ? 's' : ''} de temps libre disponible.
+`;
+      } else {
+        prompt += `J'ai ${hours} heure${hours > 1 ? 's' : ''} et ${minutes} minute${minutes > 1 ? 's' : ''} de temps libre disponible.
+`;
+      }
+    }
   }
 
   // Ajouter les critères de raffinement si nécessaire
   if (refine) {
-    if (answers.participants_count) {
-      prompt += `Nous sommes ${answers.participants_count} participants.
+    if (answers.participants_count !== undefined) {
+      const participantsText = answers.participants_count >= 5 ? "5 ou plus" : answers.participants_count.toString();
+      prompt += `Nous sommes ${participantsText} participant${answers.participants_count > 1 ? 's' : ''}.
 `;
     }
     
     if (answers.indoor_preference !== undefined) {
-      prompt += `Je préfère une activité ${answers.indoor_preference ? 'en intérieur' : 'en extérieur'}.
+      let indoorText: string;
+      switch(answers.indoor_preference) {
+        case EnvironmentPreference.Indoor:
+          indoorText = "en intérieur";
+          break;
+        case EnvironmentPreference.Outdoor:
+          indoorText = "en extérieur";
+          break;
+        case EnvironmentPreference.Indifferent:
+          indoorText = "peu importe si c'est en intérieur ou en extérieur";
+          break;
+        default:
+          indoorText = "peu importe si c'est en intérieur ou en extérieur";
+      }
+      prompt += `Je préfère une activité ${indoorText}.
 `;
     }
     
     if (answers.authentic_preference !== undefined) {
-      prompt += `Je préfère une activité ${answers.authentic_preference ? 'authentique' : 'touristique'}.
+      let authenticText: string;
+      switch(answers.authentic_preference) {
+        case ExperienceType.Authentic:
+          authenticText = "plutôt authentique";
+          break;
+        case ExperienceType.Touristic:
+          authenticText = "plutôt touristique";
+          break;
+        case ExperienceType.Indifferent:
+          authenticText = "peu importe si c'est authentique ou touristique";
+          break;
+        default:
+          authenticText = "peu importe si c'est authentique ou touristique";
+      }
+      prompt += `Je préfère une expérience ${authenticText}.
 `;
     }
     
     if (answers.temporary_preference !== undefined) {
-      prompt += `Je préfère un ${answers.temporary_preference ? 'événement éphémère' : 'lieu permanent'}.
+      let temporaryText: string;
+      switch(answers.temporary_preference) {
+        case EventPermanence.Ephemeral:
+          temporaryText = "un événement éphémère";
+          break;
+        case EventPermanence.Permanent:
+          temporaryText = "une activité permanente";
+          break;
+        case EventPermanence.Indifferent:
+          temporaryText = "peu importe si c'est éphémère ou permanent";
+          break;
+        default:
+          temporaryText = "peu importe si c'est éphémère ou permanent";
+      }
+      prompt += `Je préfère ${temporaryText}.
 `;
     }
     
@@ -459,10 +612,13 @@ Retourne exactement 3 activités différentes sous forme de JSON selon ce format
       "language": "fr", // Langue principale de l'activité
       "open_hours": [ // Heures d'ouverture, ou null si non applicable
         {
-          "day": "Lundi",
-          "open": "09:00",
-          "close": "18:00"
+          "day": "Lundi", // Jour de la semaine en français, avec majuscule
+          "open": "09:00", // Heure d'ouverture au format HH:MM
+          "close": "18:00" // Heure de fermeture au format HH:MM
         }
+        // Répète pour chaque jour ou utilise un format plus général comme "Tous les jours"
+        // Si fermé un jour, utilise "fermé" pour open et close
+        // Exemple: { "day": "Lundi", "open": "fermé", "close": "fermé" }
       ],
       "date_special": "2023-06-15 14:00-16:00", // Pour événements ponctuels, ou null
       "organizer": { // Organisateur, ou null si non applicable
@@ -475,8 +631,17 @@ Retourne exactement 3 activités différentes sous forme de JSON selon ce format
   "note_reasons": "Explication de ta note" // Pourquoi tu t'es donné cette note
 }
 
-IMPORTANT: Pour le champ 'image_url', mets TOUJOURS 'null'. Les images seront ajoutées par le backend.
-N'invente pas d'informations. Si tu ne trouves pas une donnée, indique null pour ce champ.
+IMPORTANT:
+1. Pour le champ 'image_url', mets TOUJOURS 'null'. Les images seront ajoutées par le backend.
+2. Les heures d'ouverture (open_hours) doivent respecter EXACTEMENT le format indiqué avec:
+   - "day" contenant le jour de la semaine en français avec majuscule
+   - "open" et "close" au format HH:MM (ex: "09:00", "21:30") ou "fermé" si le lieu est fermé ce jour
+3. Assure-toi que tous les champs obligatoires sont remplis avec des valeurs valides et correctement formatées.
+4. Si une information n'est pas disponible, utilise 'null' et non une chaîne vide ou d'autres valeurs.
+5. Garantis que toutes les activités suggérées correspondent aux contraintes spécifiées (budget, distance, etc.).
+6. N'invente pas d'informations. Si tu ne trouves pas une donnée, indique null pour ce champ.
+7. Vérifie que ta réponse est un JSON valide et conforme au schéma demandé.
+
 Assure-toi que toutes les activités sont réelles et actuellement disponibles, et qu'elles correspondent bien aux critères fournis.
 `;
 

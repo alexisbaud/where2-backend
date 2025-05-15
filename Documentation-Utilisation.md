@@ -47,15 +47,15 @@ Les deux routes fournissent des fonctionnalités similaires mais utilisent des m
 {
   "answers": {
     "canceled_activity": "Visite du Louvre",
-    "same_type": true,
+    "same_type": "yes",
     "budget": 20,
     "travel_time": 30,
     "energy_level": 4,
     "available_time": 120,
     "participants_count": 2,
-    "indoor_preference": true,
-    "authentic_preference": true,
-    "temporary_preference": false
+    "indoor_preference": "indoor",
+    "authentic_preference": "authentic",
+    "temporary_preference": "permanent"
   },
   "location": {
     "lat": 48.8566,
@@ -69,35 +69,54 @@ Les deux routes fournissent des fonctionnalités similaires mais utilisent des m
 
 **Description des champs**:
 
-| Champ | Type | Obligatoire | Description | Valeur par défaut |
+| Champ | Type | Obligatoire | Description | Valeurs possibles |
 |-------|------|-------------|-------------|------------------|
-| `canceled_activity` | string | Oui | Activité annulée qui sert de référence pour les suggestions | - |
-| `same_type` | boolean | Oui | `true` pour chercher le même type d'activité, `false` pour un type différent | - |
-| `budget` | number | Non | Budget maximum en euros pour l'activité (0-100) | 50€ |
-| `travel_time` | number | Non | Temps de trajet maximum accepté en minutes (5-60) | 20 minutes |
-| `energy_level` | number | Non | Niveau d'énergie de l'utilisateur sur une échelle de 1 à 7 | 4 ("Ça peut aller") |
-| `available_time` | number | Non | Temps disponible en minutes | - |
-| `participants_count` | number | Non | Nombre de participants | - |
-| `indoor_preference` | boolean | Non | `true` pour une activité en intérieur, `false` pour extérieur | - |
-| `authentic_preference` | boolean | Non | `true` pour une activité authentique, `false` pour touristique | - |
-| `temporary_preference` | boolean | Non | `true` pour un événement temporaire, `false` pour lieu permanent | - |
-| `location.lat` | number | Oui | Latitude de la position de l'utilisateur | - |
-| `location.lng` | number | Oui | Longitude de la position de l'utilisateur | - |
-| `datetime` | string | Non | Date et heure locales au format ISO 8601 (YYYY-MM-DDTHH:mm:ss) | - |
-| `refine` | boolean | Non | `true` pour affiner des résultats précédents, `false` par défaut | false |
-| `excludeIds` | string[] | Non | Liste d'IDs d'activités à exclure des suggestions | [] |
+| `canceled_activity` | string | Oui | Activité annulée qui sert de référence pour les suggestions | Texte libre |
+| `same_type` | string | Non | Préférence pour le type d'activité | "yes", "no", "indifferent" |
+| `budget` | number | Non | Budget maximum en euros pour l'activité (0-100) | 0 = gratuit uniquement, 100 = budget illimité, 1-99 = budget en euros |
+| `travel_time` | number | Non | Temps de trajet maximum accepté en minutes (5-60) | 5 = très proche, 60 = jusqu'à 1 heure, 6-59 = minutes spécifiques |
+| `energy_level` | number | Non | Niveau d'énergie de l'utilisateur sur une échelle de 1 à 7 | 1 = "Je vais faire un malaise" à 7 = "Je suis en pleine forme" |
+| `available_time` | number | Non | Temps disponible en minutes (30-240) | 30-240 minutes |
+| `participants_count` | number | Non | Nombre de participants (1-5+) | 1-5 (5 représente "5 ou plus") |
+| `indoor_preference` | string | Non | Préférence pour l'environnement de l'activité | "indoor", "outdoor", "indifferent" |
+| `authentic_preference` | string | Non | Préférence pour le type d'expérience | "authentic", "touristic", "indifferent" |
+| `temporary_preference` | string | Non | Préférence pour la permanence de l'activité | "ephemeral", "permanent", "indifferent" |
+| `location.lat` | number | Oui | Latitude de la position de l'utilisateur | Coordonnée GPS valide |
+| `location.lng` | number | Oui | Longitude de la position de l'utilisateur | Coordonnée GPS valide |
+| `datetime` | string | Non | Date et heure locales au format ISO 8601 (YYYY-MM-DDTHH:mm:ss) | Date/heure valide |
+| `refine` | boolean | Non | `true` pour affiner des résultats précédents, `false` par défaut | true/false |
+| `excludeIds` | string[] | Non | Liste d'IDs d'activités à exclure des suggestions | [] (tableau vide) ou liste d'IDs |
 
-**Notes importantes** :
-- Le champ `energy_level` utilise une échelle de 1 à 7:
+**Valeurs par défaut et comportements spéciaux**:
+
+- **Niveau d'énergie** (energy_level): Une échelle de 1 à 7 qui correspond aux descriptions suivantes:
   1. "Je vais faire un malaise"
   2. "Je suis épuisé(e)"
   3. "Je manque d'énergie"
-  4. "Ça peut aller"
+  4. "Ça peut aller" (valeur par défaut)
   5. "Je me sens bien"
   6. "J'ai la pêche"
   7. "Je suis en pleine forme"
-- Les valeurs par défaut seront appliquées si les champs facultatifs ne sont pas fournis
-- Le backend convertira automatiquement l'échelle d'énergie de 1-7 au format approprié pour l'IA
+
+- **Budget** (budget):
+  - 0 = "Gratuit uniquement"
+  - 100 = "Peu importe" (budget illimité)
+  - Autres valeurs = montant exact en euros
+
+- **Temps de transport** (travel_time):
+  - 5 = "5 minutes" (très proche)
+  - 60 = "1 heure" (maximum)
+  - Valeurs intermédiaires = minutes exactes
+
+- **Temps disponible** (available_time):
+  - De 30 minutes à 4 heures (240 minutes)
+  - Affiché en minutes ou converti en heures et minutes selon la valeur
+
+**Flux d'utilisation normal**:
+1. L'utilisateur répond au flux initial de questions (Q1-Q6)
+2. Appel API avec ces réponses (`refine: false`)
+3. Si aucune suggestion ne convient, l'utilisateur répond aux questions de raffinement (F2-F5)
+4. Nouvel appel API avec toutes les réponses et `refine: true`
 
 **Temps de réponse moyen** : 
 - `/suggest-41` : 20-40 secondes
@@ -221,8 +240,8 @@ Les routes de suggestion peuvent prendre plusieurs secondes pour répondre. Il e
 **Exemple React avec Fetch API**:
 
 ```javascript
-// Fonction pour obtenir des suggestions
-async function getSuggestions(userPreferences, userLocation) {
+// Fonction pour obtenir des suggestions (flux initial)
+async function getInitialSuggestions(userPreferences, userLocation) {
   try {
     const response = await fetch('https://where2-backend-production.up.railway.app/suggest-o3', {
       method: 'POST',
@@ -232,14 +251,15 @@ async function getSuggestions(userPreferences, userLocation) {
       body: JSON.stringify({
         answers: {
           canceled_activity: userPreferences.canceledActivity,
-          same_type: userPreferences.sameType,
-          budget: userPreferences.budget || 50, // Utilisation de la valeur par défaut si non spécifiée
-          travel_time: userPreferences.travelTime || 20, // Valeur par défaut: 20 minutes
-          energy_level: userPreferences.energyLevel || 4, // Valeur par défaut: niveau 4
-          // Autres préférences...
+          same_type: userPreferences.sameType || 'indifferent', // yes, no, indifferent
+          budget: userPreferences.budget || 50, // 0-100
+          travel_time: userPreferences.travelTime || 20, // 5-60 minutes
+          energy_level: userPreferences.energyLevel || 4, // 1-7
+          available_time: userPreferences.availableTime || 120, // 30-240 minutes
         },
         location: userLocation,
         datetime: new Date().toISOString(), // Date et heure locales de l'utilisateur
+        refine: false
       }),
     });
     
@@ -251,6 +271,49 @@ async function getSuggestions(userPreferences, userLocation) {
     return data.activities;
   } catch (error) {
     console.error('Erreur lors de la récupération des suggestions:', error);
+    throw error;
+  }
+}
+
+// Fonction pour obtenir des suggestions raffinées (flux secondaire)
+async function getRefinedSuggestions(initialPreferences, refinementPreferences, userLocation, excludedActivities) {
+  try {
+    const response = await fetch('https://where2-backend-production.up.railway.app/suggest-o3', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        answers: {
+          // Préférences initiales
+          canceled_activity: initialPreferences.canceledActivity,
+          same_type: initialPreferences.sameType || 'indifferent',
+          budget: initialPreferences.budget || 50,
+          travel_time: initialPreferences.travelTime || 20,
+          energy_level: initialPreferences.energyLevel || 4,
+          available_time: initialPreferences.availableTime || 120,
+          
+          // Préférences de raffinement
+          participants_count: refinementPreferences.participantsCount || 1, // 1-5
+          indoor_preference: refinementPreferences.indoorPreference || 'indifferent', // indoor, outdoor, indifferent
+          authentic_preference: refinementPreferences.authenticPreference || 'indifferent', // authentic, touristic, indifferent
+          temporary_preference: refinementPreferences.temporaryPreference || 'indifferent' // ephemeral, permanent, indifferent
+        },
+        location: userLocation,
+        datetime: new Date().toISOString(),
+        refine: true,
+        excludeIds: excludedActivities.map(activity => activity.id)
+      }),
+    });
+    
+    if (!response.ok) {
+      throw new Error('Erreur réseau ou serveur');
+    }
+    
+    const data = await response.json();
+    return data.activities;
+  } catch (error) {
+    console.error('Erreur lors de la récupération des suggestions raffinées:', error);
     throw error;
   }
 }

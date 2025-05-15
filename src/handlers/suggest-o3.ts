@@ -1,8 +1,8 @@
-// Handler pour la route POST /suggest-o3 (Claude 3 Opus)
+// Handler pour la route POST /suggest-o3 (OpenAI o3)
 import { Context } from 'hono';
 import { Activity, SuggestRequestSchema, SuggestResponseSchema } from '../types';
 import { calculateRoute, searchActivityImage } from '../services';
-import { generateActivities } from '../services/openai-o3'; // Utilisation du service o3
+import { generateActivities, PreferenceChoice, EnvironmentPreference, ExperienceType, EventPermanence } from '../services/openai-o3'; // Utilisation du service o3
 import { getCurrentWeather } from '../services/weather';
 import { getDatetimeInfo } from '../utils/datetime';
 
@@ -60,11 +60,42 @@ async function enrichActivities(activities: Activity[], userLat: number, userLng
 }
 
 /**
+ * Gère les valeurs par défaut pour les réponses au quiz
+ * @param rawAnswers Réponses brutes de la requête
+ * @returns Réponses avec valeurs par défaut
+ */
+function convertRequestAnswers(rawAnswers: any) {
+  const convertedAnswers = { ...rawAnswers };
+  
+  // Définir les valeurs par défaut si elles sont manquantes
+  if (convertedAnswers.same_type === undefined) {
+    convertedAnswers.same_type = PreferenceChoice.Indifferent;
+  }
+  
+  // Si participants_count est défini (mode raffinement) mais indoor_preference est absent
+  if (convertedAnswers.indoor_preference === undefined && rawAnswers.participants_count !== undefined) {
+    convertedAnswers.indoor_preference = EnvironmentPreference.Indifferent;
+  }
+  
+  // Si en mode raffinement mais authentic_preference est absent
+  if (convertedAnswers.authentic_preference === undefined && rawAnswers.participants_count !== undefined) {
+    convertedAnswers.authentic_preference = ExperienceType.Indifferent;
+  }
+  
+  // Si en mode raffinement mais temporary_preference est absent
+  if (convertedAnswers.temporary_preference === undefined && rawAnswers.participants_count !== undefined) {
+    convertedAnswers.temporary_preference = EventPermanence.Indifferent;
+  }
+  
+  return convertedAnswers;
+}
+
+/**
  * Handler pour la route POST /suggest-o3
- * Génère des suggestions d'activités personnalisées en utilisant Claude 3 Opus
+ * Génère des suggestions d'activités personnalisées en utilisant OpenAI o3
  */
 export async function suggestO3Handler(c: Context): Promise<Response> {
-  console.log('POST /suggest-o3 - Starting activity generation with Claude 3 Opus');
+  console.log('POST /suggest-o3 - Starting activity generation with OpenAI o3');
   const startTime = Date.now();
   
   try {
@@ -80,7 +111,16 @@ export async function suggestO3Handler(c: Context): Promise<Response> {
     console.log('Request data:', JSON.stringify(requestData, null, 2));
     
     // Extraire les paramètres essentiels
-    const { location, answers, refine, excludeIds } = requestData;
+    const { location, answers: rawAnswers, refine, excludeIds, datetime } = requestData;
+    
+    // Convertir les réponses pour les rendre compatibles avec le service OpenAI
+    const answers = convertRequestAnswers(rawAnswers);
+    
+    // Appliquer les valeurs par défaut si non fournies
+    if (answers.same_type === undefined) answers.same_type = PreferenceChoice.No; // Valeur par défaut
+    if (answers.budget === undefined) answers.budget = 50; // Valeur par défaut: 50€
+    if (answers.travel_time === undefined) answers.travel_time = 20; // Valeur par défaut: 20 minutes
+    if (answers.energy_level === undefined) answers.energy_level = 4; // Valeur par défaut: niveau 4
     
     try {
       // Récupérer les données météo pour la localisation
@@ -88,13 +128,13 @@ export async function suggestO3Handler(c: Context): Promise<Response> {
       const weatherData = await getCurrentWeather(location.lat, location.lng);
       console.log('Weather data received:', weatherData);
       
-      // Obtenir les informations de date et heure
-      const datetimeInfo = getDatetimeInfo();
+      // Obtenir les informations de date et heure en utilisant la valeur fournie par l'utilisateur
+      const datetimeInfo = getDatetimeInfo(datetime);
       console.log('Datetime info:', datetimeInfo);
       
       try {
-        // Générer des suggestions avec le modèle Claude 3 Opus
-        console.log('Calling Claude 3 Opus API...');
+        // Générer des suggestions avec le modèle OpenAI o3
+        console.log('Calling OpenAI o3 API...');
         const suggestionsData = await generateActivities({
           answers,
           location,

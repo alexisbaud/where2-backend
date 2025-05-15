@@ -2,7 +2,7 @@
 import { Context } from 'hono';
 import { SuggestRequestSchema, SuggestResponseSchema, Activity } from '../types';
 import { getCurrentWeather } from '../services/weather';
-import { generateActivities } from '../services/openai-41';
+import { generateActivities, PreferenceChoice, EnvironmentPreference, ExperienceType, EventPermanence } from '../services/openai-41';
 import { calculateRoute } from '../services/maps';
 import { getDatetimeInfo } from '../utils/datetime';
 import { z } from 'zod';
@@ -62,6 +62,56 @@ async function enrichActivities(activities: Activity[], userLat: number, userLng
 }
 
 /**
+ * Convertit les valeurs booléennes en types énumérés pour la compatibilité avec l'API
+ * @param rawAnswers Réponses brutes de la requête
+ * @returns Réponses converties avec types énumérés
+ */
+function convertRequestAnswers(rawAnswers: any) {
+  const convertedAnswers = { ...rawAnswers };
+  
+  // Convertir same_type de boolean à PreferenceChoice
+  if (typeof rawAnswers.same_type === 'boolean') {
+    convertedAnswers.same_type = rawAnswers.same_type 
+      ? PreferenceChoice.Yes 
+      : PreferenceChoice.No;
+  } else if (rawAnswers.same_type === undefined) {
+    convertedAnswers.same_type = PreferenceChoice.Indifferent;
+  }
+  
+  // Convertir indoor_preference de boolean à EnvironmentPreference
+  if (typeof rawAnswers.indoor_preference === 'boolean') {
+    convertedAnswers.indoor_preference = rawAnswers.indoor_preference
+      ? EnvironmentPreference.Indoor
+      : EnvironmentPreference.Outdoor;
+  } else if (rawAnswers.indoor_preference === undefined && rawAnswers.participants_count !== undefined) {
+    // Si participants_count est défini (mode raffinement) mais indoor_preference est absent
+    convertedAnswers.indoor_preference = EnvironmentPreference.Indifferent;
+  }
+  
+  // Convertir authentic_preference de boolean à ExperienceType
+  if (typeof rawAnswers.authentic_preference === 'boolean') {
+    convertedAnswers.authentic_preference = rawAnswers.authentic_preference
+      ? ExperienceType.Authentic
+      : ExperienceType.Touristic;
+  } else if (rawAnswers.authentic_preference === undefined && rawAnswers.participants_count !== undefined) {
+    // Si en mode raffinement mais authentic_preference est absent
+    convertedAnswers.authentic_preference = ExperienceType.Indifferent;
+  }
+  
+  // Convertir temporary_preference de boolean à EventPermanence
+  if (typeof rawAnswers.temporary_preference === 'boolean') {
+    convertedAnswers.temporary_preference = rawAnswers.temporary_preference
+      ? EventPermanence.Ephemeral
+      : EventPermanence.Permanent;
+  } else if (rawAnswers.temporary_preference === undefined && rawAnswers.participants_count !== undefined) {
+    // Si en mode raffinement mais temporary_preference est absent
+    convertedAnswers.temporary_preference = EventPermanence.Indifferent;
+  }
+  
+  return convertedAnswers;
+}
+
+/**
  * Handler pour la route POST /suggest-41
  * Génère des suggestions d'activités en fonction des réponses de l'utilisateur et de sa localisation
  */
@@ -72,7 +122,7 @@ export async function suggestHandler(c: Context): Promise<Response> {
   try {
     // Valider la requête reçue
     console.log('Validating request...');
-    const requestValidation = SuggestRequestSchema.safeParse(c.req.json());
+    const requestValidation = SuggestRequestSchema.safeParse(await c.req.json());
     
     if (!requestValidation.success) {
       console.error('Invalid request format:', requestValidation.error.format());
@@ -80,12 +130,16 @@ export async function suggestHandler(c: Context): Promise<Response> {
     }
     
     // Extraire les données validées
-    const { answers, location, datetime, refine, excludeIds } = requestValidation.data;
+    const { answers: rawAnswers, location, datetime, refine, excludeIds } = requestValidation.data;
+    
+    // Convertir les réponses pour les rendre compatibles avec le service OpenAI
+    const answers = convertRequestAnswers(rawAnswers);
     
     // Appliquer les valeurs par défaut si non fournies
+    if (answers.same_type === undefined) answers.same_type = PreferenceChoice.No; // Valeur par défaut
     if (answers.budget === undefined) answers.budget = 50; // Valeur par défaut: 50€
     if (answers.travel_time === undefined) answers.travel_time = 20; // Valeur par défaut: 20 minutes
-    if (answers.energy_level === undefined) answers.energy_level = 4; // Valeur par défaut: niveau 4 (moyen)
+    if (answers.energy_level === undefined) answers.energy_level = 4;
     
     try {
       // Récupérer les données météo
