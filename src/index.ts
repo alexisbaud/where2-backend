@@ -60,5 +60,6 @@ serve({
   console.log('- POST /suggest-41         Generate activity suggestions (using model gpt-4.1)');
   console.log('- POST /suggest-o3         Generate activity suggestions (using model o3)');
   console.log('- GET  /activity/:id       Get details for a specific activity');
+  console.log('- POST /mock-delay         Test endpoint that returns mock data after 60 seconds');
   console.log('\nPress Ctrl+C to stop the server');
 });

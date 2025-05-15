@@ -4,7 +4,7 @@
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
-import { suggestHandler, getActivityHandler, healthHandler, suggestO3Handler } from '../handlers';
+import { suggestHandler, getActivityHandler, healthHandler, suggestO3Handler, mockDelayHandler } from '../handlers';
 
 // Créer l'instance Hono
 const app = new Hono();
@@ -26,6 +26,9 @@ app.get('/healthz', healthHandler);
 app.post('/suggest-41', suggestHandler);
 app.post('/suggest-o3', suggestO3Handler);
 app.get('/activity/:id', getActivityHandler);
+
+// Route de test avec délai de 60 secondes
+app.post('/mock-delay', mockDelayHandler);
 
 // Route de fallback pour les routes non définies
 app.notFound((c) => {
