@@ -50,7 +50,7 @@ Les deux routes fournissent des fonctionnalités similaires mais utilisent des m
     "same_type": true,
     "budget": 20,
     "travel_time": 30,
-    "energy_level": 7,
+    "energy_level": 4,
     "available_time": 120,
     "participants_count": 2,
     "indoor_preference": true,
@@ -69,23 +69,35 @@ Les deux routes fournissent des fonctionnalités similaires mais utilisent des m
 
 **Description des champs**:
 
-| Champ | Type | Obligatoire | Description |
-|-------|------|-------------|-------------|
-| `canceled_activity` | string | Oui | Activité annulée qui sert de référence pour les suggestions |
-| `same_type` | boolean | Oui | `true` pour chercher le même type d'activité, `false` pour un type différent |
-| `budget` | number | Non | Budget maximum en euros pour l'activité |
-| `travel_time` | number | Non | Temps de trajet maximum accepté en minutes |
-| `energy_level` | number | Non | Niveau d'énergie de l'utilisateur sur une échelle de 1 à 10 |
-| `available_time` | number | Non | Temps disponible en minutes |
-| `participants_count` | number | Non | Nombre de participants |
-| `indoor_preference` | boolean | Non | `true` pour une activité en intérieur, `false` pour extérieur |
-| `authentic_preference` | boolean | Non | `true` pour une activité authentique, `false` pour touristique |
-| `temporary_preference` | boolean | Non | `true` pour un événement temporaire, `false` pour lieu permanent |
-| `location.lat` | number | Oui | Latitude de la position de l'utilisateur |
-| `location.lng` | number | Oui | Longitude de la position de l'utilisateur |
-| `datetime` | string | Non | Date et heure locales au format ISO 8601 (YYYY-MM-DDTHH:mm:ss) |
-| `refine` | boolean | Non | `true` pour affiner des résultats précédents, `false` par défaut |
-| `excludeIds` | string[] | Non | Liste d'IDs d'activités à exclure des suggestions |
+| Champ | Type | Obligatoire | Description | Valeur par défaut |
+|-------|------|-------------|-------------|------------------|
+| `canceled_activity` | string | Oui | Activité annulée qui sert de référence pour les suggestions | - |
+| `same_type` | boolean | Oui | `true` pour chercher le même type d'activité, `false` pour un type différent | - |
+| `budget` | number | Non | Budget maximum en euros pour l'activité (0-100) | 50€ |
+| `travel_time` | number | Non | Temps de trajet maximum accepté en minutes (5-60) | 20 minutes |
+| `energy_level` | number | Non | Niveau d'énergie de l'utilisateur sur une échelle de 1 à 7 | 4 ("Ça peut aller") |
+| `available_time` | number | Non | Temps disponible en minutes | - |
+| `participants_count` | number | Non | Nombre de participants | - |
+| `indoor_preference` | boolean | Non | `true` pour une activité en intérieur, `false` pour extérieur | - |
+| `authentic_preference` | boolean | Non | `true` pour une activité authentique, `false` pour touristique | - |
+| `temporary_preference` | boolean | Non | `true` pour un événement temporaire, `false` pour lieu permanent | - |
+| `location.lat` | number | Oui | Latitude de la position de l'utilisateur | - |
+| `location.lng` | number | Oui | Longitude de la position de l'utilisateur | - |
+| `datetime` | string | Non | Date et heure locales au format ISO 8601 (YYYY-MM-DDTHH:mm:ss) | - |
+| `refine` | boolean | Non | `true` pour affiner des résultats précédents, `false` par défaut | false |
+| `excludeIds` | string[] | Non | Liste d'IDs d'activités à exclure des suggestions | [] |
+
+**Notes importantes** :
+- Le champ `energy_level` utilise une échelle de 1 à 7:
+  1. "Je vais faire un malaise"
+  2. "Je suis épuisé(e)"
+  3. "Je manque d'énergie"
+  4. "Ça peut aller"
+  5. "Je me sens bien"
+  6. "J'ai la pêche"
+  7. "Je suis en pleine forme"
+- Les valeurs par défaut seront appliquées si les champs facultatifs ne sont pas fournis
+- Le backend convertira automatiquement l'échelle d'énergie de 1-7 au format approprié pour l'IA
 
 **Temps de réponse moyen** : 
 - `/suggest-41` : 20-40 secondes
@@ -110,7 +122,7 @@ Les deux routes fournissent des fonctionnalités similaires mais utilisent des m
       },
       "distance_m": 1500,
       "estimated_travel_time": 15,
-      "travel_type": "walking",
+      "travel_type": 1,
       "indoor": false,
       "authentic": true,
       "temporary": false,
@@ -188,7 +200,8 @@ Les routes de suggestion peuvent prendre plusieurs secondes pour répondre. Il e
 
 1. **Collecte des préférences utilisateur**:
    - Posez les questions à l'utilisateur de manière conversationnelle
-   - Collectez au minimum: activité annulée, même type ou différent, budget
+   - Collectez au minimum: activité annulée, même type ou différent, budget, temps de transport et niveau d'énergie
+   - Si une valeur n'est pas spécifiée par l'utilisateur, utilisez les valeurs par défaut du parcours utilisateur
 
 2. **Premier appel API**:
    - Utilisez `/suggest-o3` avec les préférences de base
@@ -220,7 +233,9 @@ async function getSuggestions(userPreferences, userLocation) {
         answers: {
           canceled_activity: userPreferences.canceledActivity,
           same_type: userPreferences.sameType,
-          budget: userPreferences.budget,
+          budget: userPreferences.budget || 50, // Utilisation de la valeur par défaut si non spécifiée
+          travel_time: userPreferences.travelTime || 20, // Valeur par défaut: 20 minutes
+          energy_level: userPreferences.energyLevel || 4, // Valeur par défaut: niveau 4
           // Autres préférences...
         },
         location: userLocation,

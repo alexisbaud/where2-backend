@@ -18,19 +18,22 @@ export async function suggestO3Handler(c: Context): Promise<Response> {
   const startTime = Date.now();
   
   try {
-    // Valider le body de la requête
-    const body = await c.req.json();
-    console.log('Request body:', JSON.stringify(body, null, 2));
+    // Valider la requête reçue
+    console.log('Validating request...');
+    const requestValidation = SuggestRequestSchema.safeParse(c.req.json());
     
-    const validationResult = SuggestRequestSchema.safeParse(body);
-    
-    if (!validationResult.success) {
-      console.error('Invalid request body:', validationResult.error);
-      return c.json({ error: 'Invalid request format', details: validationResult.error.format() }, 400);
+    if (!requestValidation.success) {
+      console.error('Invalid request format:', requestValidation.error.format());
+      return c.json({ error: 'Invalid request format', details: requestValidation.error.format() }, 400);
     }
     
-    const { answers, location, refine, excludeIds, datetime } = validationResult.data;
-    console.log('Validated data:', { answers, location, refine: refine || false, excludeIds: excludeIds || [], datetime: datetime || 'Not provided' });
+    // Extraire les données validées
+    const { answers, location, datetime, refine, excludeIds } = requestValidation.data;
+    
+    // Appliquer les valeurs par défaut si non fournies
+    if (answers.budget === undefined) answers.budget = 50; // Valeur par défaut: 50€
+    if (answers.travel_time === undefined) answers.travel_time = 20; // Valeur par défaut: 20 minutes
+    if (answers.energy_level === undefined) answers.energy_level = 4; // Valeur par défaut: niveau 4 (moyen)
     
     try {
       // Récupérer les données météo

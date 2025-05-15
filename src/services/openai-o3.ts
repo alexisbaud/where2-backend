@@ -356,7 +356,9 @@ Je viens d'annuler mon activité précédente: "${answers.canceled_activity || '
 
   // Ajouter le niveau d'énergie
   if (answers.energy_level) {
-    prompt += `Mon niveau d'énergie est de ${answers.energy_level}/10.
+    // Convertir l'échelle 1-7 du frontend en échelle 1-10 pour le prompt
+    const energyLevelMapped = Math.round((answers.energy_level / 7) * 10);
+    prompt += `Mon niveau d'énergie est de ${energyLevelMapped}/10.
 `;
   }
 
