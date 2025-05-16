@@ -219,14 +219,23 @@ export async function calculateRoute(
         console.log(`Number of transit segments: ${transitStepsCount}`);
         
         // Facteurs correctifs pour aligner avec l'application Google Maps
-        const BASE_MARGIN_SECONDS = 120; // 2 minutes de base
-        const TRANSIT_FACTOR = 1.15; // +15% du temps
-        const PER_TRANSIT_MARGIN_SECONDS = 180; // 3 min par correspondance
+        const BASE_MARGIN_SECONDS = 600; // 10 minutes de base (augmenté de 2 à 10 minutes)
+        const TRANSIT_FACTOR = 1.4; // +40% du temps (augmenté de 15% à 40%)
+        const PER_TRANSIT_MARGIN_SECONDS = 300; // 5 min par correspondance (augmenté de 3 à 5 minutes)
         
         // Calcul du temps corrigé
         let correctedDuration = transitBaseDuration * TRANSIT_FACTOR;
         correctedDuration += BASE_MARGIN_SECONDS;
         correctedDuration += transitStepsCount * PER_TRANSIT_MARGIN_SECONDS;
+        
+        // Facteur minimal pour éviter des corrections trop faibles sur les courts trajets
+        // Pour les trajets <10 minutes, assurons-nous d'ajouter au moins 10 minutes
+        const minimumAddedTime = 600; // 10 minutes minimum
+        const actualAddedTime = correctedDuration - transitBaseDuration;
+        if (actualAddedTime < minimumAddedTime) {
+            correctedDuration = transitBaseDuration + minimumAddedTime;
+            console.log(`Applied minimum correction of ${minimumAddedTime/60} minutes`);
+        }
         
         // Arrondir aux 30 secondes près
         correctedDuration = Math.ceil(correctedDuration / 30) * 30;
