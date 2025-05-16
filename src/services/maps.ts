@@ -104,7 +104,10 @@ export async function getAccurateCoordinates(title: string, address: string): Pr
 
 /**
  * Calcule la distance et le temps de trajet entre deux points
- * Utilise le mode à pied si le trajet est inférieur à WALKING_THRESHOLD_MIN (15 min), sinon utilise les transports en commun
+ * Utilise le mode à pied si le trajet est inférieur à WALKING_THRESHOLD_MIN,
+ * sinon utilise les transports en commun avec des corrections pour aligner
+ * les estimations avec l'application Google Maps
+ * 
  * @param originLat Latitude d'origine
  * @param originLng Longitude d'origine
  * @param destLat Latitude de destination
@@ -153,6 +156,7 @@ export async function calculateRoute(
     console.log(`Walking distance: ${walkingRoute.legs[0].distance.text} (${walkingRoute.legs[0].distance.value} meters)`);
     
     // Si le trajet à pied est inférieur au seuil, utiliser ce mode
+    // Les trajets courts à pied sont généralement bien estimés
     if (walkingDurationMinutes <= WALKING_THRESHOLD_MIN) {
       console.log(`Walking duration (${walkingDurationMinutes.toFixed(1)} min) is below threshold (${WALKING_THRESHOLD_MIN} min), using walking mode`);
       return {
@@ -165,10 +169,13 @@ export async function calculateRoute(
     // Sinon, essayer les transports en commun
     console.log(`Walking duration (${walkingDurationMinutes.toFixed(1)} min) exceeds threshold (${WALKING_THRESHOLD_MIN} min), trying transit mode`);
     try {
+      // Utiliser l'heure actuelle pour des estimations plus précises
+      const now = new Date();
       const transitParams = {
         origin: `${originLat},${originLng}`,
         destination: `${destLat},${destLng}`,
         mode: TravelMode.transit,
+        departure_time: now, // Crucial pour des estimations réalistes
         key: env.GOOGLE_MAPS_API_KEY,
         language: Language.fr
       };
@@ -191,18 +198,46 @@ export async function calculateRoute(
       
       const transitRoute = transitResult.data.routes[0];
       
-      // Si un itinéraire en transport en commun est trouvé, l'utiliser
+      // Si un itinéraire en transport en commun est trouvé, l'utiliser avec des corrections
       if (transitRoute) {
-        const transitDuration = transitRoute.legs[0].duration.value; // en secondes
-        const transitDurationMinutes = transitDuration / 60; // Pour les logs
+        const transitBaseDuration = transitRoute.legs[0].duration.value; // en secondes
+        const transitBaseDurationMinutes = transitBaseDuration / 60; // Pour les logs
         
         console.log(`Transit route found: ${transitRoute.summary || 'No summary'}`);
-        console.log(`Transit duration: ${transitDurationMinutes.toFixed(1)} minutes (${transitDuration} seconds)`);
+        console.log(`Transit base duration: ${transitBaseDurationMinutes.toFixed(1)} minutes (${transitBaseDuration} seconds)`);
         console.log(`Transit distance: ${transitRoute.legs[0].distance.text} (${transitRoute.legs[0].distance.value} meters)`);
+        
+        // Calculer le nombre de correspondances/étapes de transport
+        const steps = transitRoute.legs[0].steps;
+        let transitStepsCount = 0;
+        
+        for (const step of steps) {
+          if (step.travel_mode === TravelMode.transit) {
+            transitStepsCount++;
+          }
+        }
+        console.log(`Number of transit segments: ${transitStepsCount}`);
+        
+        // Facteurs correctifs pour aligner avec l'application Google Maps
+        const BASE_MARGIN_SECONDS = 120; // 2 minutes de base
+        const TRANSIT_FACTOR = 1.15; // +15% du temps
+        const PER_TRANSIT_MARGIN_SECONDS = 180; // 3 min par correspondance
+        
+        // Calcul du temps corrigé
+        let correctedDuration = transitBaseDuration * TRANSIT_FACTOR;
+        correctedDuration += BASE_MARGIN_SECONDS;
+        correctedDuration += transitStepsCount * PER_TRANSIT_MARGIN_SECONDS;
+        
+        // Arrondir aux 30 secondes près
+        correctedDuration = Math.ceil(correctedDuration / 30) * 30;
+        
+        console.log(`Original transit duration: ${transitBaseDuration} seconds (${transitBaseDurationMinutes.toFixed(1)} minutes)`);
+        console.log(`Corrected transit duration: ${correctedDuration} seconds (${(correctedDuration/60).toFixed(1)} minutes)`);
+        console.log(`Added buffer: ${correctedDuration - transitBaseDuration} seconds (${((correctedDuration - transitBaseDuration)/60).toFixed(1)} minutes)`);
         
         return {
           distance_m: transitRoute.legs[0].distance.value,
-          estimated_travel_time: transitDuration, // Conserver les secondes
+          estimated_travel_time: Math.round(correctedDuration), // Valeur corrigée
           travel_type: 2 // transports en commun
         };
       }
